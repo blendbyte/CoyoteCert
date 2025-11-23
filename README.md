@@ -150,7 +150,8 @@ try {
 
 #### Generating a CSR
 ```php
-$privateKey = \Rogierw\RwAcme\Support\OpenSsl::generatePrivateKey();
+$privateKey = \Rogierw\RwAcme\Support\OpenSsl::generatePrivateKey(key_type: OPENSSL_KEYTYPE_RSA);
+// ^- you can switch "key_type: OPENSSL_KEYTYPE_EC" to generate a ECDSA key and certificate instead of RSA
 $csr = \Rogierw\RwAcme\Support\OpenSsl::generateCsr(['example.com'], $privateKey);
 ```
 
