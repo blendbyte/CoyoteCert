@@ -7,12 +7,21 @@ use Rogierw\RwAcme\Exceptions\LetsEncryptClientException;
 
 class OpenSsl
 {
-    public static function generatePrivateKey(): OpenSSLAsymmetricKey
+    public static function generatePrivateKey(int $key_type = OPENSSL_KEYTYPE_RSA): OpenSSLAsymmetricKey
     {
-        return openssl_pkey_new([
-            'private_key_bits' => 2048,
-            'digest_alg' => 'sha256',
-        ]);
+        return match ($key_type) {
+            OPENSSL_KEYTYPE_RSA => openssl_pkey_new([
+                'private_key_type' => OPENSSL_KEYTYPE_RSA,
+                'private_key_bits' => 2048,
+                'digest_alg' => 'sha256',
+            ]),
+            OPENSSL_KEYTYPE_EC => openssl_pkey_new([
+                'private_key_type' => OPENSSL_KEYTYPE_EC,
+                'private_key_bits' => 2048,
+                'curve_name' => 'prime256v1',
+            ]),
+            default => throw new LetsEncryptClientException('Invalid keytype'),
+        };
     }
 
     public static function openSslKeyToString(OpenSSLAsymmetricKey $key): string
