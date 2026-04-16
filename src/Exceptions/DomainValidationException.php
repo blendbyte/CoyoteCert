@@ -2,7 +2,7 @@
 
 namespace CoyoteCert\Exceptions;
 
-class DomainValidationException extends LetsEncryptClientException
+class DomainValidationException extends AcmeException
 {
     public static function localHttpChallengeTestFailed(string $domain, string $code): self
     {

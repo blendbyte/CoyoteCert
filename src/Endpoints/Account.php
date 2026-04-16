@@ -5,7 +5,8 @@ namespace CoyoteCert\Endpoints;
 use CoyoteCert\DTO\AccountData;
 use CoyoteCert\DTO\EabCredentials;
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\CryptoException;
+use CoyoteCert\Exceptions\AcmeException;
 use CoyoteCert\Http\Response;
 use CoyoteCert\Support\Base64;
 use CoyoteCert\Support\JsonWebKey;
@@ -30,7 +31,7 @@ class Account extends Endpoint
             $eab = $this->client->getProvider()->getEabCredentials($email);
 
             if ($eab === null) {
-                throw new LetsEncryptClientException(sprintf(
+                throw new AcmeException(sprintf(
                     '%s requires EAB credentials. Pass your EAB key ID and HMAC key when constructing the provider.',
                     $this->client->getProvider()->getDisplayName()
                 ));
@@ -58,7 +59,7 @@ class Account extends Endpoint
     public function get(): AccountData
     {
         if (!$this->exists()) {
-            throw new LetsEncryptClientException('Local account keys not found.');
+            throw new AcmeException('Local account keys not found.');
         }
 
         // Use the newAccountUrl to get the account data based on the key.
@@ -200,7 +201,7 @@ class Account extends Endpoint
             [$alg, $digest, $sigLen] = match ($details['ec']['curve_name']) {
                 'prime256v1' => ['ES256', 'SHA256', 32],
                 'secp384r1'  => ['ES384', 'SHA384', 48],
-                default      => throw new \RuntimeException("Unsupported EC curve: {$details['ec']['curve_name']}"),
+                default      => throw new CryptoException("Unsupported EC curve: {$details['ec']['curve_name']}"),
             };
         } else {
             [$alg, $digest, $sigLen] = ['RS256', 'SHA256', null];
@@ -259,6 +260,6 @@ class Account extends Endpoint
         $message = $response->getBody()['detail'] ?? $defaultMessage;
         $this->logResponse('error', $message, $response);
 
-        throw new LetsEncryptClientException($message);
+        throw new AcmeException($message);
     }
 }

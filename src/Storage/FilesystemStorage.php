@@ -3,7 +3,7 @@
 namespace CoyoteCert\Storage;
 
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\StorageException;
 
 class FilesystemStorage implements StorageInterface
 {
@@ -103,7 +103,7 @@ class FilesystemStorage implements StorageInterface
         $dir = $this->dir();
 
         if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {
-            throw new LetsEncryptClientException(
+            throw new StorageException(
                 sprintf('Storage directory "%s" could not be created.', $dir)
             );
         }
@@ -112,7 +112,7 @@ class FilesystemStorage implements StorageInterface
     private function readFile(string $path): string
     {
         if (!file_exists($path)) {
-            throw new LetsEncryptClientException(
+            throw new StorageException(
                 sprintf('Storage file "%s" does not exist.', $path)
             );
         }
@@ -120,7 +120,7 @@ class FilesystemStorage implements StorageInterface
         $contents = file_get_contents($path);
 
         if ($contents === false) {
-            throw new LetsEncryptClientException(
+            throw new StorageException(
                 sprintf('Could not read storage file "%s".', $path)
             );
         }
@@ -131,7 +131,7 @@ class FilesystemStorage implements StorageInterface
     private function writeFile(string $path, string $contents): void
     {
         if (file_put_contents($path, $contents, LOCK_EX) === false) {
-            throw new LetsEncryptClientException(
+            throw new StorageException(
                 sprintf('Could not write storage file "%s".', $path)
             );
         }

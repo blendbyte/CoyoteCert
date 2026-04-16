@@ -2,6 +2,6 @@
 
 namespace CoyoteCert\Exceptions;
 
-class RateLimitException extends LetsEncryptClientException
+class RateLimitException extends AcmeException
 {
 }

@@ -2,7 +2,7 @@
 
 namespace CoyoteCert\Support;
 
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\CryptoException;
 
 class JsonWebKey
 {
@@ -12,7 +12,7 @@ class JsonWebKey
         $privateKey = openssl_pkey_get_private($accountKey);
 
         if ($privateKey === false) {
-            throw new LetsEncryptClientException('Can not create private key.');
+            throw new CryptoException('Can not create private key.');
         }
 
         $details = openssl_pkey_get_details($privateKey);
@@ -21,7 +21,7 @@ class JsonWebKey
             [$crv, $coordLen] = match ($details['ec']['curve_name']) {
                 'prime256v1' => ['P-256', 32],
                 'secp384r1'  => ['P-384', 48],
-                default      => throw new LetsEncryptClientException("Unsupported EC curve: {$details['ec']['curve_name']}"),
+                default      => throw new CryptoException("Unsupported EC curve: {$details['ec']['curve_name']}"),
             };
 
             return [

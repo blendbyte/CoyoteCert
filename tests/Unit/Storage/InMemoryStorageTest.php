@@ -32,12 +32,12 @@ it('saves and retrieves an account key', function () {
 
 it('throws when getting account key before saving', function () {
     expect(fn () => (new InMemoryStorage())->getAccountKey())
-        ->toThrow(\CoyoteCert\Exceptions\LetsEncryptClientException::class);
+        ->toThrow(\CoyoteCert\Exceptions\StorageException::class);
 });
 
 it('throws when getting account key type before saving', function () {
     expect(fn () => (new InMemoryStorage())->getAccountKeyType())
-        ->toThrow(\CoyoteCert\Exceptions\LetsEncryptClientException::class);
+        ->toThrow(\CoyoteCert\Exceptions\StorageException::class);
 });
 
 it('has no certificate initially', function () {

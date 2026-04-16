@@ -93,7 +93,7 @@ it('getAccountKey throws when account key file does not exist', function () {
     // readFile() throws when the file path does not exist — verifies the
     // "Storage file ... does not exist" error path inside readFile().
     expect(fn () => $this->storage->getAccountKey())
-        ->toThrow(\CoyoteCert\Exceptions\LetsEncryptClientException::class, 'does not exist');
+        ->toThrow(\CoyoteCert\Exceptions\StorageException::class, 'does not exist');
 });
 
 it('saveAccountKey throws when the storage directory cannot be created', function () {
@@ -101,7 +101,7 @@ it('saveAccountKey throws when the storage directory cannot be created', functio
     file_put_contents($this->dir, 'not-a-dir');
 
     expect(fn () => $this->storage->saveAccountKey('pem', KeyType::RSA_2048))
-        ->toThrow(\CoyoteCert\Exceptions\LetsEncryptClientException::class, 'could not be created');
+        ->toThrow(\CoyoteCert\Exceptions\StorageException::class, 'could not be created');
 
     @unlink($this->dir);
 });

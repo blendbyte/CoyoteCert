@@ -7,7 +7,7 @@ use Psr\Log\LoggerInterface;
 use CoyoteCert\Enums\AuthorizationChallengeEnum;
 use CoyoteCert\Enums\KeyType;
 use CoyoteCert\DTO\RenewalWindow;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\AcmeException;
 use CoyoteCert\Http\Psr18Adapter;
 use CoyoteCert\Interfaces\ChallengeHandlerInterface;
 use CoyoteCert\Interfaces\HttpClientInterface;
@@ -244,7 +244,7 @@ class CoyoteCert
         }
 
         if (!$allPassed) {
-            throw new LetsEncryptClientException(
+            throw new AcmeException(
                 'Domain validation failed — one or more challenges did not pass.'
             );
         }
@@ -261,7 +261,7 @@ class CoyoteCert
 
         // ── 12. Finalize order ─────────────────────────────────────────────
         if (!$api->order()->finalize($order, $csr)) {
-            throw new LetsEncryptClientException('Order finalization failed.');
+            throw new AcmeException('Order finalization failed.');
         }
 
         // ── 13. Poll until order transitions processing → valid ────────────
@@ -312,7 +312,7 @@ class CoyoteCert
     public function revoke(StoredCertificate $cert, int $reason = 0): bool
     {
         if ($this->storage === null) {
-            throw new LetsEncryptClientException(
+            throw new AcmeException(
                 'No storage configured. Call ->storage() before revoking.'
             );
         }
@@ -337,7 +337,7 @@ class CoyoteCert
         if (!$this->needsRenewal($daysBeforeExpiry)) {
             // needsRenewal() returns false only when storage is set and the cert exists.
             return $this->storage->getCertificate($this->domains[0])
-                ?? throw new LetsEncryptClientException('Certificate unexpectedly missing from storage.');
+                ?? throw new AcmeException('Certificate unexpectedly missing from storage.');
         }
 
         return $this->issue();
@@ -378,13 +378,13 @@ class CoyoteCert
     private function validate(): void
     {
         if (empty($this->domains)) {
-            throw new LetsEncryptClientException(
+            throw new AcmeException(
                 'No domains configured. Call ->domains() before issuing a certificate.'
             );
         }
 
         if ($this->challengeHandler === null) {
-            throw new LetsEncryptClientException(
+            throw new AcmeException(
                 'No challenge handler configured. Call ->challenge() before issuing a certificate.'
             );
         }
@@ -398,7 +398,7 @@ class CoyoteCert
             }
         }
 
-        throw new LetsEncryptClientException(
+        throw new AcmeException(
             'The configured challenge handler does not support any known challenge type.'
         );
     }

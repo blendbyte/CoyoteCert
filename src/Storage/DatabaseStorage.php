@@ -3,7 +3,7 @@
 namespace CoyoteCert\Storage;
 
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\StorageException;
 
 /**
  * PDO-backed storage.
@@ -54,7 +54,7 @@ class DatabaseStorage implements StorageInterface
         $value = $this->get(self::KEY_ACCOUNT_PEM);
 
         if ($value === null) {
-            throw new LetsEncryptClientException('No account key found in database storage.');
+            throw new StorageException('No account key found in database storage.');
         }
 
         return $value;
@@ -65,7 +65,7 @@ class DatabaseStorage implements StorageInterface
         $value = $this->get(self::KEY_ACCOUNT_TYPE);
 
         if ($value === null) {
-            throw new LetsEncryptClientException('No account key type found in database storage.');
+            throw new StorageException('No account key type found in database storage.');
         }
 
         return KeyType::from($value);

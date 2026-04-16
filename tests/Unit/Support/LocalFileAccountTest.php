@@ -1,6 +1,6 @@
 <?php
 
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\StorageException;
 use CoyoteCert\Support\LocalFileAccount;
 
 beforeEach(function () {
@@ -40,17 +40,17 @@ it('getPublicKey returns a PEM string after key generation', function () {
 
 it('generateNewKeys throws for unsupported key type', function () {
     expect(fn () => $this->account->generateNewKeys('EC'))
-        ->toThrow(LetsEncryptClientException::class);
+        ->toThrow(StorageException::class);
 });
 
 it('getPrivateKey throws when no key has been generated', function () {
     expect(fn () => $this->account->getPrivateKey())
-        ->toThrow(LetsEncryptClientException::class);
+        ->toThrow(StorageException::class);
 });
 
 it('getPublicKey throws when no key has been generated', function () {
     expect(fn () => $this->account->getPublicKey())
-        ->toThrow(LetsEncryptClientException::class);
+        ->toThrow(StorageException::class);
 });
 
 it('trailing slash is normalised in the path', function () {
@@ -69,7 +69,7 @@ it('generateNewKeys throws when the directory cannot be created', function () {
     file_put_contents($this->dir, 'not-a-dir');
 
     expect(fn () => $this->account->generateNewKeys('RSA'))
-        ->toThrow(LetsEncryptClientException::class, 'was not created');
+        ->toThrow(StorageException::class, 'was not created');
 
     @unlink($this->dir);
 });

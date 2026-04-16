@@ -3,7 +3,7 @@
 namespace CoyoteCert\Provider;
 
 use CoyoteCert\DTO\EabCredentials;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\AcmeException;
 
 class ZeroSSL implements AcmeProviderInterface
 {
@@ -76,7 +76,7 @@ class ZeroSSL implements AcmeProviderInterface
         curl_close($ch);
 
         if ($body === false || $httpCode !== 200) {
-            throw new LetsEncryptClientException(
+            throw new AcmeException(
                 sprintf('ZeroSSL EAB provisioning failed (HTTP %d).', $httpCode)
             );
         }
@@ -84,7 +84,7 @@ class ZeroSSL implements AcmeProviderInterface
         $data = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
 
         if (empty($data['success']) || empty($data['eab_kid']) || empty($data['eab_hmac_key'])) {
-            throw new LetsEncryptClientException(
+            throw new AcmeException(
                 'ZeroSSL EAB provisioning returned an unexpected response.'
             );
         }

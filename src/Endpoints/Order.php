@@ -4,7 +4,7 @@ namespace CoyoteCert\Endpoints;
 
 use CoyoteCert\DTO\AccountData;
 use CoyoteCert\DTO\OrderData;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\AcmeException;
 use CoyoteCert\Exceptions\OrderNotFoundException;
 use CoyoteCert\Exceptions\RateLimitException;
 use CoyoteCert\Support\Base64;
@@ -20,7 +20,7 @@ class Order extends Endpoint
         $identifiers = [];
         foreach ($domains as $domain) {
             if (preg_match_all('~(\*\.)~', $domain) > 1) {
-                throw new LetsEncryptClientException('Cannot create orders with multiple wildcards in one domain.');
+                throw new AcmeException('Cannot create orders with multiple wildcards in one domain.');
             }
 
             $identifiers[] = [
@@ -52,7 +52,7 @@ class Order extends Endpoint
 
         $this->logResponse('error', 'Creating new order failed; bad response code.', $response, ['payload' => $payload]);
 
-        throw new LetsEncryptClientException('Creating new order failed; bad response code.');
+        throw new AcmeException('Creating new order failed; bad response code.');
     }
 
     public function get(string $id): OrderData
@@ -79,7 +79,7 @@ class Order extends Endpoint
         match ($response->getHttpResponseCode()) {
             404 => throw new OrderNotFoundException($response->getBody()['detail'] ?? 'Order cannot be found.'),
             429 => throw new RateLimitException($response->getBody()['detail'] ?? 'Too many requests.'),
-            default => throw new LetsEncryptClientException($response->getBody()['detail'] ?? 'Unknown error.'),
+            default => throw new AcmeException($response->getBody()['detail'] ?? 'Unknown error.'),
         };
     }
 
@@ -101,13 +101,13 @@ class Order extends Endpoint
             }
 
             if (($body['status'] ?? '') === 'invalid') {
-                throw new LetsEncryptClientException('Order became invalid during finalization.');
+                throw new AcmeException('Order became invalid during finalization.');
             }
 
             sleep($this->retryAfterDelay($response, $i, $sleepSeconds));
         }
 
-        throw new LetsEncryptClientException("Order did not become valid after {$maxAttempts} attempts.");
+        throw new AcmeException("Order did not become valid after {$maxAttempts} attempts.");
     }
 
     public function finalize(OrderData $orderData, string $csr): bool

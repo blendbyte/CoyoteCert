@@ -3,7 +3,7 @@
 namespace CoyoteCert\Support;
 
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\StorageException;
 use CoyoteCert\Interfaces\AcmeAccountInterface;
 
 class LocalFileAccount implements AcmeAccountInterface
@@ -40,13 +40,13 @@ class LocalFileAccount implements AcmeAccountInterface
     public function generateNewKeys(string $keyType = 'RSA'): bool
     {
         if ($keyType !== 'RSA') {
-            throw new LetsEncryptClientException('Key type is not supported.');
+            throw new StorageException('Key type is not supported.');
         }
 
         $concurrentDirectory = rtrim($this->accountKeysPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 
         if (!is_dir($concurrentDirectory) && !mkdir($concurrentDirectory) && !is_dir($concurrentDirectory)) {
-            throw new LetsEncryptClientException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+            throw new StorageException(sprintf('Directory "%s" was not created', $concurrentDirectory));
         }
 
         $keys = CryptRSA::generate();
@@ -56,7 +56,7 @@ class LocalFileAccount implements AcmeAccountInterface
 
         if (file_put_contents($privateKeyPath, $keys['privateKey']) === false ||
             file_put_contents($publicKeyPath, $keys['publicKey']) === false) {
-            throw new LetsEncryptClientException('Failed to write keys to files.');
+            throw new StorageException('Failed to write keys to files.');
         }
 
         return true;
@@ -67,7 +67,7 @@ class LocalFileAccount implements AcmeAccountInterface
         $privateKeyPath = $this->accountKeysPath.$this->getKeyName('private');
 
         if (file_put_contents($privateKeyPath, $pem) === false) {
-            throw new LetsEncryptClientException('Failed to write private key to file.');
+            throw new StorageException('Failed to write private key to file.');
         }
 
         // Derive and persist the new public key
@@ -76,7 +76,7 @@ class LocalFileAccount implements AcmeAccountInterface
         $publicKeyPath = $this->accountKeysPath.$this->getKeyName('public');
 
         if (file_put_contents($publicKeyPath, $details['key']) === false) {
-            throw new LetsEncryptClientException('Failed to write public key to file.');
+            throw new StorageException('Failed to write public key to file.');
         }
     }
 
@@ -85,13 +85,13 @@ class LocalFileAccount implements AcmeAccountInterface
         $filePath = $this->accountKeysPath.$this->getKeyName($type);
 
         if (!file_exists($filePath)) {
-            throw new LetsEncryptClientException(sprintf('[%s] File does not exist', $filePath));
+            throw new StorageException(sprintf('[%s] File does not exist', $filePath));
         }
 
         $content = file_get_contents($filePath);
 
         if ($content === false) {
-            throw new LetsEncryptClientException(sprintf('[%s] Failed to get contents of the file', $filePath));
+            throw new StorageException(sprintf('[%s] Failed to get contents of the file', $filePath));
         }
 
         return $content;
@@ -100,7 +100,7 @@ class LocalFileAccount implements AcmeAccountInterface
     private function getKeyName(string $type): string
     {
         if (empty($this->accountName)) {
-            throw new LetsEncryptClientException('Account name is not set.');
+            throw new StorageException('Account name is not set.');
         }
 
         return sprintf('%s-%s.pem', $this->accountName, $type);

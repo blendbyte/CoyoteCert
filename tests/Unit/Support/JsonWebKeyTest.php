@@ -5,7 +5,7 @@ use CoyoteCert\Support\JsonWebKey;
 
 it('throws when given an invalid private key string', function () {
     expect(fn () => JsonWebKey::compute('not-a-pem'))
-        ->toThrow(\CoyoteCert\Exceptions\LetsEncryptClientException::class, 'Can not create private key');
+        ->toThrow(\CoyoteCert\Exceptions\CryptoException::class, 'Can not create private key');
 });
 
 it('computes an RSA JWK with e, kty, n', function () {
@@ -66,5 +66,5 @@ it('thumbprint returns a non-empty base64url string', function () {
 
 it('throws for an unsupported EC curve', function () {
     expect(fn () => JsonWebKey::compute(ecKeyPem('secp521r1')))
-        ->toThrow(\CoyoteCert\Exceptions\LetsEncryptClientException::class);
+        ->toThrow(\CoyoteCert\Exceptions\CryptoException::class);
 });

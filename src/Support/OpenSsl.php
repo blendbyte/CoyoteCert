@@ -4,7 +4,7 @@ namespace CoyoteCert\Support;
 
 use OpenSSLAsymmetricKey;
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\CryptoException;
 
 class OpenSsl
 {
@@ -31,7 +31,7 @@ class OpenSsl
         $key = openssl_pkey_new($config);
 
         if ($key === false) {
-            throw new LetsEncryptClientException(
+            throw new CryptoException(
                 sprintf('Failed to generate %s key.', $type->value)
             );
         }
@@ -52,14 +52,14 @@ class OpenSsl
                 'private_key_bits' => 2048,
                 'curve_name' => 'prime256v1',
             ]),
-            default => throw new LetsEncryptClientException('Invalid keytype'),
+            default => throw new CryptoException('Invalid keytype'),
         };
     }
 
     public static function openSslKeyToString(OpenSSLAsymmetricKey $key): string
     {
         if (!openssl_pkey_export($key, $output)) {
-            throw new LetsEncryptClientException('Exporting SSL key failed.');
+            throw new CryptoException('Exporting SSL key failed.');
         }
 
         return trim($output);
@@ -100,7 +100,7 @@ class OpenSsl
         fclose($tempFile);
 
         if (!openssl_csr_export($csr, $out)) {
-            throw new LetsEncryptClientException('Exporting CSR failed.');
+            throw new CryptoException('Exporting CSR failed.');
         }
 
         return trim($out);

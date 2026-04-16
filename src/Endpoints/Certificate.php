@@ -4,7 +4,7 @@ namespace CoyoteCert\Endpoints;
 
 use CoyoteCert\DTO\CertificateBundleData;
 use CoyoteCert\DTO\OrderData;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\AcmeException;
 use CoyoteCert\Support\Base64;
 
 class Certificate extends Endpoint
@@ -16,7 +16,7 @@ class Certificate extends Endpoint
         if ($response->getHttpResponseCode() !== 200) {
             $this->logResponse('error', 'Failed to fetch certificate', $response);
 
-            throw new LetsEncryptClientException('Failed to fetch certificate.');
+            throw new AcmeException('Failed to fetch certificate.');
         }
 
         return CertificateBundleData::fromResponse($response);
@@ -25,11 +25,11 @@ class Certificate extends Endpoint
     public function revoke(string $pem, int $reason = 0): bool
     {
         if (($data = openssl_x509_read($pem)) === false) {
-            throw new LetsEncryptClientException('Could not parse the certificate.');
+            throw new AcmeException('Could not parse the certificate.');
         }
 
         if (openssl_x509_export($data, $certificate) === false) {
-            throw new LetsEncryptClientException('Could not export the certificate.');
+            throw new AcmeException('Could not export the certificate.');
         }
 
         preg_match('~-----BEGIN\sCERTIFICATE-----(.*)-----END\sCERTIFICATE-----~s', $certificate, $matches);

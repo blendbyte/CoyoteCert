@@ -4,6 +4,6 @@ namespace CoyoteCert\Exceptions;
 
 use RuntimeException;
 
-class LetsEncryptClientException extends RuntimeException
+class AcmeException extends RuntimeException
 {
 }

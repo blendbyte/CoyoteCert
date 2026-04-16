@@ -6,7 +6,7 @@ use CoyoteCert\DTO\DomainValidationData;
 use CoyoteCert\DTO\OrderData;
 use CoyoteCert\Enums\AuthorizationChallengeEnum;
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\AcmeException;
 use CoyoteCert\Exceptions\OrderNotFoundException;
 use CoyoteCert\Exceptions\RateLimitException;
 use CoyoteCert\Http\Response;
@@ -68,7 +68,7 @@ it('Directory::all() throws on a 503 response', function () {
     $api = makeEndpointApi(endpointMock(getBody: ['detail' => 'Service Unavailable'], getCode: 503));
 
     expect(fn () => $api->directory()->all())
-        ->toThrow(LetsEncryptClientException::class, 'Cannot get directory');
+        ->toThrow(AcmeException::class, 'Cannot get directory');
 });
 
 it('Directory::getOrder() replaces new-order with order and appends a trailing slash', function () {
@@ -96,7 +96,7 @@ it('Account::get() throws when storage has no keys', function () {
     $api     = makeEndpointApi(endpointMock(getBody: directoryBody()), $storage);
 
     expect(fn () => $api->account()->get())
-        ->toThrow(LetsEncryptClientException::class, 'Local account keys not found');
+        ->toThrow(AcmeException::class, 'Local account keys not found');
 });
 
 it('Account::create() throws via throwError on a non-201 response', function () {
@@ -114,7 +114,7 @@ it('Account::create() throws via throwError on a non-201 response', function () 
     );
 
     expect(fn () => $api->account()->create('test@example.com'))
-        ->toThrow(LetsEncryptClientException::class);
+        ->toThrow(AcmeException::class);
 });
 
 // ── RenewalInfo ───────────────────────────────────────────────────────────────
@@ -343,7 +343,7 @@ it('Account::get() throws via throwError when server returns non-200', function 
     );
 
     expect(fn () => makeEndpointApi($mock, $storage)->account()->get())
-        ->toThrow(LetsEncryptClientException::class, 'Forbidden');
+        ->toThrow(AcmeException::class, 'Forbidden');
 });
 
 it('Account::create() throws when EAB is required but provider returns null credentials', function () {
@@ -355,7 +355,7 @@ it('Account::create() throws when EAB is required but provider returns null cred
     );
 
     expect(fn () => $api->account()->create('test@example.com'))
-        ->toThrow(LetsEncryptClientException::class, 'requires EAB credentials');
+        ->toThrow(AcmeException::class, 'requires EAB credentials');
 });
 
 it('Account::create() succeeds with valid EAB credentials', function () {
@@ -405,7 +405,7 @@ it('Order::new() throws for domains with multiple wildcards', function () {
     $api = makeEndpointApi(endpointMock(getBody: directoryBody()), new InMemoryStorage());
 
     expect(fn () => $api->order()->new(makeAccountData(), ['*.*.example.com']))
-        ->toThrow(LetsEncryptClientException::class, 'multiple wildcards');
+        ->toThrow(AcmeException::class, 'multiple wildcards');
 });
 
 it('Order::new() throws when response is not 201', function () {
@@ -416,7 +416,7 @@ it('Order::new() throws when response is not 201', function () {
     ), withKeyStorage());
 
     expect(fn () => $api->order()->new(makeAccountData(), ['example.com']))
-        ->toThrow(LetsEncryptClientException::class, 'Creating new order failed');
+        ->toThrow(AcmeException::class, 'Creating new order failed');
 });
 
 it('Order::new() returns OrderData on 201 response', function () {
@@ -479,7 +479,7 @@ it('Order::waitUntilValid() throws when order becomes invalid', function () {
     ), withKeyStorage());
 
     expect(fn () => $api->order()->waitUntilValid(pendingOrderData(), 1, 0))
-        ->toThrow(LetsEncryptClientException::class, 'invalid');
+        ->toThrow(AcmeException::class, 'invalid');
 });
 
 it('Order::waitUntilValid() throws after exhausting max attempts', function () {
@@ -490,7 +490,7 @@ it('Order::waitUntilValid() throws after exhausting max attempts', function () {
     ), withKeyStorage());
 
     expect(fn () => $api->order()->waitUntilValid(pendingOrderData(), 1, 0))
-        ->toThrow(LetsEncryptClientException::class, 'did not become valid');
+        ->toThrow(AcmeException::class, 'did not become valid');
 });
 
 it('Order::finalize() returns true on 200 response', function () {
@@ -564,7 +564,7 @@ it('Order::get() throws RateLimitException on 429', function () {
         ->toThrow(RateLimitException::class, 'Too many requests');
 });
 
-it('Order::get() throws LetsEncryptClientException on 500', function () {
+it('Order::get() throws AcmeException on 500', function () {
     $storage = withKeyStorage();
 
     $mock = closureMock(
@@ -579,7 +579,7 @@ it('Order::get() throws LetsEncryptClientException on 500', function () {
     );
 
     expect(fn () => makeEndpointApi($mock, $storage)->order()->get('fail'))
-        ->toThrow(LetsEncryptClientException::class, 'Internal error');
+        ->toThrow(AcmeException::class, 'Internal error');
 });
 
 it('Order::get() returns OrderData on success', function () {
@@ -973,14 +973,14 @@ it('Certificate::getBundle() throws on non-200 response', function () {
     );
 
     expect(fn () => $api->certificate()->getBundle($order))
-        ->toThrow(LetsEncryptClientException::class, 'Failed to fetch certificate');
+        ->toThrow(AcmeException::class, 'Failed to fetch certificate');
 });
 
 it('Certificate::revoke() throws when PEM is invalid', function () {
     $api = makeEndpointApi(endpointMock(getBody: directoryBody()), withKeyStorage());
 
     expect(fn () => $api->certificate()->revoke('not-a-valid-cert'))
-        ->toThrow(LetsEncryptClientException::class, 'Could not parse the certificate');
+        ->toThrow(AcmeException::class, 'Could not parse the certificate');
 });
 
 it('Certificate::revoke() returns true on successful revocation', function () {
@@ -1130,7 +1130,7 @@ it('Account::update() throws on non-200 response', function () {
     );
 
     expect(fn () => makeEndpointApi($mock, $storage)->account()->update(makeAccountData(), []))
-        ->toThrow(LetsEncryptClientException::class, 'Unauthorized');
+        ->toThrow(AcmeException::class, 'Unauthorized');
 });
 
 // ── Account::deactivate() ─────────────────────────────────────────────────────
@@ -1156,7 +1156,7 @@ it('Account::deactivate() throws on non-200 response', function () {
     );
 
     expect(fn () => makeEndpointApi($mock, $storage)->account()->deactivate(makeAccountData()))
-        ->toThrow(LetsEncryptClientException::class);
+        ->toThrow(AcmeException::class);
 });
 
 // ── Account::keyRollover() ────────────────────────────────────────────────────
@@ -1229,7 +1229,7 @@ it('Account::keyRollover() throws on non-200 response', function () {
     );
 
     expect(fn () => makeEndpointApi($mock, $storage)->account()->keyRollover(makeAccountData()))
-        ->toThrow(LetsEncryptClientException::class, 'Key rollover failed');
+        ->toThrow(AcmeException::class, 'Key rollover failed');
 });
 
 // ── Directory::keyChange() ────────────────────────────────────────────────────

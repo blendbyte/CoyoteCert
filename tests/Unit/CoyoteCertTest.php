@@ -3,7 +3,7 @@
 use CoyoteCert\CoyoteCert;
 use CoyoteCert\Enums\AuthorizationChallengeEnum;
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\AcmeException;
 use CoyoteCert\Interfaces\ChallengeHandlerInterface;
 use CoyoteCert\Provider\LetsEncryptStaging;
 use CoyoteCert\Provider\Pebble;
@@ -123,26 +123,26 @@ it('detectChallengeType() throws when the handler supports no known challenge ty
     $method = new \ReflectionMethod(CoyoteCert::class, 'detectChallengeType');
 
     expect(fn () => $method->invoke($coyote))
-        ->toThrow(LetsEncryptClientException::class, 'does not support any known challenge type');
+        ->toThrow(AcmeException::class, 'does not support any known challenge type');
 });
 
 // ── validate() / issue() guard ────────────────────────────────────────────────
 
 it('issue() throws when no domains are configured', function () {
     expect(fn () => makeCoyote()->challenge(makeNoOpHandler())->issue())
-        ->toThrow(LetsEncryptClientException::class, 'No domains');
+        ->toThrow(AcmeException::class, 'No domains');
 });
 
 it('issue() throws when no challenge handler is configured', function () {
     expect(fn () => makeCoyote()->domains('example.com')->issue())
-        ->toThrow(LetsEncryptClientException::class, 'No challenge handler');
+        ->toThrow(AcmeException::class, 'No challenge handler');
 });
 
 // ── revoke() guard ────────────────────────────────────────────────────────────
 
 it('revoke() throws when no storage is configured', function () {
     expect(fn () => makeCoyote()->revoke(makeCoyoteCert()))
-        ->toThrow(LetsEncryptClientException::class, 'No storage');
+        ->toThrow(AcmeException::class, 'No storage');
 });
 
 // ── needsRenewal() ────────────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ it('issueOrRenew() returns existing cert when renewal is not needed', function (
 it('renew() is an alias for issue() and throws when no domains are configured', function () {
     // renew() delegates to issue() → validate() → throws "No domains"
     expect(fn () => makeCoyote()->challenge(makeNoOpHandler())->renew())
-        ->toThrow(LetsEncryptClientException::class, 'No domains');
+        ->toThrow(AcmeException::class, 'No domains');
 });
 
 // ── ariWindow() (tested via needsRenewal()) ───────────────────────────────────

@@ -3,7 +3,7 @@
 namespace CoyoteCert\Storage;
 
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\StorageException;
 
 /**
  * Volatile in-memory storage — useful for testing and one-shot scripts.
@@ -27,7 +27,7 @@ class InMemoryStorage implements StorageInterface
     public function getAccountKey(): string
     {
         if ($this->accountKey === null) {
-            throw new LetsEncryptClientException('No account key in memory storage.');
+            throw new StorageException('No account key in memory storage.');
         }
 
         return $this->accountKey;
@@ -36,7 +36,7 @@ class InMemoryStorage implements StorageInterface
     public function getAccountKeyType(): KeyType
     {
         if ($this->accountKeyType === null) {
-            throw new LetsEncryptClientException('No account key type in memory storage.');
+            throw new StorageException('No account key type in memory storage.');
         }
 
         return $this->accountKeyType;

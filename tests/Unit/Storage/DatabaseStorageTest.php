@@ -1,7 +1,7 @@
 <?php
 
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\StorageException;
 use CoyoteCert\Storage\DatabaseStorage;
 use CoyoteCert\Storage\StoredCertificate;
 
@@ -57,12 +57,12 @@ it('overwrites an existing account key', function () {
 
 it('throws when getAccountKey is called with no key stored', function () {
     $storage = makeSqliteStorage();
-    expect(fn () => $storage->getAccountKey())->toThrow(LetsEncryptClientException::class);
+    expect(fn () => $storage->getAccountKey())->toThrow(StorageException::class);
 });
 
 it('throws when getAccountKeyType is called with no key type stored', function () {
     $storage = makeSqliteStorage();
-    expect(fn () => $storage->getAccountKeyType())->toThrow(LetsEncryptClientException::class);
+    expect(fn () => $storage->getAccountKeyType())->toThrow(StorageException::class);
 });
 
 it('has no certificate initially', function () {

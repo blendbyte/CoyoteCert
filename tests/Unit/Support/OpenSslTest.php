@@ -1,7 +1,7 @@
 <?php
 
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\CryptoException;
 use CoyoteCert\Support\OpenSsl;
 
 // ── generateKey ───────────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ it('generatePrivateKey returns an EC key', function () {
 
 it('generatePrivateKey throws for unsupported key type', function () {
     expect(fn () => OpenSsl::generatePrivateKey(999))
-        ->toThrow(LetsEncryptClientException::class);
+        ->toThrow(CryptoException::class);
 });
 
 // ── openSslKeyToString ────────────────────────────────────────────────────────

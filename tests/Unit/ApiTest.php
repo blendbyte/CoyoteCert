@@ -1,7 +1,7 @@
 <?php
 
 use CoyoteCert\Api;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\AcmeException;
 use CoyoteCert\Http\Client;
 use CoyoteCert\Http\Response;
 use CoyoteCert\Interfaces\HttpClientInterface;
@@ -29,7 +29,7 @@ it('localAccount() throws when no storage is configured', function () {
     $api = makeApi(storage: null);
 
     expect(fn () => $api->localAccount())
-        ->toThrow(LetsEncryptClientException::class, 'No storage configured');
+        ->toThrow(AcmeException::class, 'No storage configured');
 });
 
 // ── getHttpClient() ───────────────────────────────────────────────────────────

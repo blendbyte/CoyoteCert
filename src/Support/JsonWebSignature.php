@@ -47,7 +47,7 @@ class JsonWebSignature
         return match ($curveName) {
             'prime256v1' => ['ES256', 'SHA256', 32],
             'secp384r1'  => ['ES384', 'SHA384', 48],
-            default      => throw new \RuntimeException("Unsupported EC curve: {$curveName}"),
+            default      => throw new \CoyoteCert\Exceptions\CryptoException("Unsupported EC curve: {$curveName}"),
         };
     }
 

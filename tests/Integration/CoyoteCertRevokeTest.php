@@ -49,5 +49,5 @@ it('throws when revoke is called without storage', function () {
         ->issue();
 
     expect(fn () => CoyoteCert::with(pebble())->revoke($cert))
-        ->toThrow(\CoyoteCert\Exceptions\LetsEncryptClientException::class);
+        ->toThrow(\CoyoteCert\Exceptions\AcmeException::class);
 })->skip(fn () => !pebbleAvailable(), 'Pebble not running — skipping integration tests');

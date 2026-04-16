@@ -2,6 +2,6 @@
 
 namespace CoyoteCert\Exceptions;
 
-class OrderNotFoundException extends LetsEncryptClientException
+class OrderNotFoundException extends AcmeException
 {
 }

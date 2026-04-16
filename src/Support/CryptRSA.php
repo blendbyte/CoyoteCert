@@ -2,7 +2,7 @@
 
 namespace CoyoteCert\Support;
 
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\CryptoException;
 
 class CryptRSA
 {
@@ -17,7 +17,7 @@ class CryptRSA
         ]);
 
         if (!openssl_pkey_export($pKey, $privateKey)) {
-            throw new LetsEncryptClientException('RSA keypair export failed.');
+            throw new CryptoException('RSA keypair export failed.');
         }
 
         $details = openssl_pkey_get_details($pKey);

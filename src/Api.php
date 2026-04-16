@@ -11,7 +11,7 @@ use CoyoteCert\Endpoints\DomainValidation;
 use CoyoteCert\Endpoints\Nonce;
 use CoyoteCert\Endpoints\Order;
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\LetsEncryptClientException;
+use CoyoteCert\Exceptions\AcmeException;
 use CoyoteCert\Http\Client;
 use CoyoteCert\Interfaces\AcmeAccountInterface;
 use CoyoteCert\Interfaces\HttpClientInterface;
@@ -41,7 +41,7 @@ class Api
             return new StorageAccountAdapter($this->storage, $this->accountKeyType);
         }
 
-        throw new LetsEncryptClientException(
+        throw new AcmeException(
             'No storage configured. Pass a StorageInterface to the Api constructor.'
         );
     }
