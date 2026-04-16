@@ -239,6 +239,9 @@ class CoyoteCert
             );
         }
 
+        // ── 9b. Refresh order — status transitions pending → ready after all challenges pass
+        $order = $api->order()->refresh($order);
+
         // ── 10. Generate certificate private key ───────────────────────────
         $certKey    = OpenSsl::generateKey($this->certKeyType);
         $certKeyPem = OpenSsl::openSslKeyToString($certKey);

@@ -82,6 +82,16 @@ class Order extends Endpoint
         };
     }
 
+    public function refresh(OrderData $order): OrderData
+    {
+        $response = $this->client->getHttpClient()->post(
+            $order->url,
+            $this->createKeyId($order->accountUrl, $order->url)
+        );
+
+        return OrderData::fromResponse($response, $order->accountUrl);
+    }
+
     public function waitUntilValid(OrderData $order, int $maxAttempts = 10, int $sleepSeconds = 2): OrderData
     {
         for ($i = 0; $i < $maxAttempts; $i++) {
