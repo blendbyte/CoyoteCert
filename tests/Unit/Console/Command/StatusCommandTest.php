@@ -178,3 +178,70 @@ it('shows all domains for a multi-domain certificate', function () {
     expect($output)->toContain('www.example.com');
     expect($output)->toContain('api.example.com');
 });
+
+it('shows the EC P-384 key type label', function () {
+    $this->storage->saveCertificate('example.com', makeStatusCert(keyType: KeyType::EC_P384));
+
+    $this->tester->execute([
+        '--domain'   => 'example.com',
+        '--storage'  => $this->dir,
+        '--key-type' => 'ec384',
+    ]);
+
+    expect($this->buffer->fetch())->toContain('EC P-384');
+});
+
+it('shows the RSA 4096 key type label', function () {
+    $this->storage->saveCertificate('example.com', makeStatusCert(keyType: KeyType::RSA_4096));
+
+    $this->tester->execute([
+        '--domain'   => 'example.com',
+        '--storage'  => $this->dir,
+        '--key-type' => 'rsa4096',
+    ]);
+
+    expect($this->buffer->fetch())->toContain('RSA 4096');
+});
+
+it('shows SANs parsed from a real certificate', function () {
+    $key = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_RSA, 'private_key_bits' => 2048]);
+    $csr = openssl_csr_new(['commonName' => 'example.com'], $key);
+
+    $configFile = tempnam(sys_get_temp_dir(), 'openssl-') . '.cnf';
+    file_put_contents($configFile, implode("\n", [
+        '[req]',
+        'distinguished_name = req_distinguished_name',
+        '[req_distinguished_name]',
+        '[v3_req]',
+        'subjectAltName = DNS:example.com, DNS:www.example.com',
+    ]));
+
+    $selfSignedCert = openssl_csr_sign($csr, null, $key, 30, [
+        'config'          => $configFile,
+        'x509_extensions' => 'v3_req',
+        'digest_alg'      => 'sha256',
+    ]);
+
+    $pem = '';
+    openssl_x509_export($selfSignedCert, $pem);
+    unlink($configFile);
+
+    $stored = new StoredCertificate(
+        certificate: $pem,
+        privateKey: 'fake-key',
+        fullchain: $pem,
+        caBundle: '',
+        issuedAt: new DateTimeImmutable('-1 day'),
+        expiresAt: (new DateTimeImmutable())->modify('+90 days'),
+        domains: ['example.com'],
+        keyType: KeyType::EC_P256,
+    );
+    $this->storage->saveCertificate('example.com', $stored);
+
+    $this->tester->execute([
+        '--domain'  => 'example.com',
+        '--storage' => $this->dir,
+    ]);
+
+    expect($this->buffer->fetch())->toContain('www.example.com');
+});

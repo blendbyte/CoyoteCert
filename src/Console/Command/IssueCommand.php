@@ -100,11 +100,6 @@ class IssueCommand extends Command
             $coyote = $coyote->skipLocalTest();
         }
 
-        $wasIssued = false;
-        $coyote->onIssued(function () use (&$wasIssued): void {
-            $wasIssued = true;
-        });
-
         $primaryDomain   = $domains[0];
         $providerDisplay = ProviderResolver::displayName($provider);
 
@@ -115,7 +110,7 @@ class IssueCommand extends Command
         ));
 
         try {
-            $cert = $force ? $coyote->issue() : $coyote->issueOrRenew($days);
+            [$cert, $wasIssued] = $this->performIssue($coyote, $force, $days);
         } catch (RateLimitException $e) {
             $retryAfter = $e->getRetryAfter();
             $hint       = $retryAfter !== null
@@ -140,21 +135,35 @@ class IssueCommand extends Command
         return Command::SUCCESS;
     }
 
+    /**
+     * @return array{StoredCertificate, bool}
+     */
+    protected function performIssue(CoyoteCert $builder, bool $force, int $days): array
+    {
+        $wasIssued = false;
+        $builder->onIssued(function () use (&$wasIssued): void {
+            $wasIssued = true;
+        });
+        $cert = $force ? $builder->issue() : $builder->issueOrRenew($days);
+
+        return [$cert, $wasIssued];
+    }
+
     private function renderSuccess(StoredCertificate $cert, string $storagePath, string $provider, bool $wasIssued): void
     {
         $icon    = $wasIssued ? '✓' : '→';
         $heading = $wasIssued ? 'Certificate issued successfully' : 'Certificate is still valid — no renewal needed';
         $color   = $wasIssued ? 'text-green-500' : 'text-blue-500';
 
-        $domainsStr  = implode(', ', $cert->domains);
-        $keyLabel    = $this->keyTypeLabel($cert->keyType);
-        $expiresDate = $cert->expiresAt->format('M j, Y');
-        $days        = $cert->remainingDays();
-        $daysColor   = match (true) {
+        $domainsStr = implode(', ', $cert->domains);
+        $keyLabel   = $this->keyTypeLabel($cert->keyType);
+        $days       = $cert->remainingDays();
+        $daysColor  = match (true) {
             $days <= 7  => 'text-red-500',
             $days <= 30 => 'text-yellow-500',
             default     => 'text-green-400',
         };
+        $expiresStr = sprintf('%s (%d days)', $cert->expiresAt->format('M j, Y'), $days);
 
         render(sprintf(
             <<<HTML
@@ -178,7 +187,7 @@ class IssueCommand extends Command
                         </tr>
                         <tr>
                             <td class="text-gray-500 pr-4">Expires</td>
-                            <td>%s <span class="%s">(%d days)</span></td>
+                            <td class="%s">%s</td>
                         </tr>
                         <tr>
                             <td class="text-gray-500 pr-4">Storage</td>
@@ -193,9 +202,8 @@ class IssueCommand extends Command
             $domainsStr,
             $provider,
             $keyLabel,
-            $expiresDate,
             $daysColor,
-            $days,
+            $expiresStr,
             $storagePath,
         ));
     }

@@ -114,6 +114,10 @@ it('returns display name for buypass', function () {
     expect(ProviderResolver::displayName('buypass'))->toContain('Buypass');
 });
 
+it('returns display name for buypass-staging', function () {
+    expect(ProviderResolver::displayName('buypass-staging'))->toContain('Staging');
+});
+
 it('returns display name for sslcom', function () {
     expect(ProviderResolver::displayName('sslcom'))->toContain('SSL');
 });
