@@ -31,7 +31,7 @@ final class EcSigning
             throw new CryptoException('Malformed DER-encoded ECDSA signature.');
         }
 
-        $r    = substr($der, $pos + 2, $rLen);
+        $r = substr($der, $pos + 2, $rLen);
         $pos += 2 + $rLen;
         $sLen = ord($der[$pos + 1]);
 

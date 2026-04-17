@@ -14,11 +14,11 @@ class Pebble extends AbstractProvider
      * @param string|null $eabHmac EAB HMAC key if EAB is enabled.
      */
     public function __construct(
-        private readonly string  $url       = 'https://localhost:14000/dir',
+        private readonly string  $url = 'https://localhost:14000/dir',
         private readonly bool    $verifyTls = true,
-        private readonly bool    $eab       = false,
-        private readonly ?string $eabKid    = null,
-        private readonly ?string $eabHmac   = null,
+        private readonly bool    $eab = false,
+        private readonly ?string $eabKid = null,
+        private readonly ?string $eabHmac = null,
     ) {}
 
     public function getDirectoryUrl(): string

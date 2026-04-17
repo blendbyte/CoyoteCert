@@ -120,27 +120,27 @@ it('domains() accepts a wildcard domain', function () {
 // ── SEC-05: domain name validation ───────────────────────────────────────────
 
 it('domains() throws AcmeException for a domain containing a newline', function () {
-    expect(fn () => makeCoyote()->domains("evil.com\ninjected"))
+    expect(fn() => makeCoyote()->domains("evil.com\ninjected"))
         ->toThrow(AcmeException::class, 'Invalid domain name');
 });
 
 it('domains() throws AcmeException for a domain containing a slash', function () {
-    expect(fn () => makeCoyote()->domains('evil.com/path'))
+    expect(fn() => makeCoyote()->domains('evil.com/path'))
         ->toThrow(AcmeException::class, 'Invalid domain name');
 });
 
 it('domains() throws AcmeException for a bare TLD', function () {
-    expect(fn () => makeCoyote()->domains('com'))
+    expect(fn() => makeCoyote()->domains('com'))
         ->toThrow(AcmeException::class, 'Invalid domain name');
 });
 
 it('domains() throws AcmeException for an empty string', function () {
-    expect(fn () => makeCoyote()->domains(''))
+    expect(fn() => makeCoyote()->domains(''))
         ->toThrow(AcmeException::class, 'Invalid domain name');
 });
 
 it('domains() throws AcmeException for a double wildcard', function () {
-    expect(fn () => makeCoyote()->domains('*.*.example.com'))
+    expect(fn() => makeCoyote()->domains('*.*.example.com'))
         ->toThrow(AcmeException::class, 'Invalid domain name');
 });
 

@@ -46,7 +46,7 @@ class DatabaseStorage implements StorageInterface
     {
         if (!preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
             throw new \InvalidArgumentException(
-                sprintf('Invalid SQL identifier "%s": only [a-zA-Z0-9_] are allowed.', $table)
+                sprintf('Invalid SQL identifier "%s": only [a-zA-Z0-9_] are allowed.', $table),
             );
         }
 

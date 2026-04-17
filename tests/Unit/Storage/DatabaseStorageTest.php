@@ -192,17 +192,16 @@ it('createTableSql() returns SQL for a valid table name', function () {
 });
 
 it('createTableSql() throws InvalidArgumentException for a table name with a space', function () {
-    expect(fn () => DatabaseStorage::createTableSql('bad table'))
+    expect(fn() => DatabaseStorage::createTableSql('bad table'))
         ->toThrow(\InvalidArgumentException::class, 'Invalid SQL identifier');
 });
 
 it('createTableSql() throws InvalidArgumentException for a table name with a backtick', function () {
-    expect(fn () => DatabaseStorage::createTableSql('`evil`'))
+    expect(fn() => DatabaseStorage::createTableSql('`evil`'))
         ->toThrow(\InvalidArgumentException::class, 'Invalid SQL identifier');
 });
 
 it('createTableSql() throws InvalidArgumentException for a table name with a semicolon', function () {
-    expect(fn () => DatabaseStorage::createTableSql('certs; DROP TABLE users; --'))
+    expect(fn() => DatabaseStorage::createTableSql('certs; DROP TABLE users; --'))
         ->toThrow(\InvalidArgumentException::class, 'Invalid SQL identifier');
 });
-

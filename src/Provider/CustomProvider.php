@@ -10,23 +10,22 @@ class CustomProvider extends AbstractProvider
     /**
      * Use any ACME-compliant CA.
      *
-     * @param string       $directoryUrl  Full directory URL of the CA.
-     * @param string       $displayName   Human-readable name (used in logs).
-     * @param string|null  $eabKid        EAB key ID if required by the CA.
-     * @param string|null  $eabHmac       EAB HMAC key if required by the CA.
-     * @param bool         $verifyTls     Whether to verify the CA's TLS certificate.
-     * @param EabAlgorithm $eabAlgorithm  HMAC algorithm for EAB signing (default HS256).
+     * @param string $directoryUrl Full directory URL of the CA.
+     * @param string $displayName Human-readable name (used in logs).
+     * @param string|null $eabKid EAB key ID if required by the CA.
+     * @param string|null $eabHmac EAB HMAC key if required by the CA.
+     * @param bool $verifyTls Whether to verify the CA's TLS certificate.
+     * @param EabAlgorithm $eabAlgorithm HMAC algorithm for EAB signing (default HS256).
      */
     public function __construct(
         private readonly string       $directoryUrl,
-        private readonly string       $displayName      = 'Custom CA',
-        private readonly ?string      $eabKid            = null,
-        private readonly ?string      $eabHmac           = null,
-        private readonly bool         $verifyTls         = true,
+        private readonly string       $displayName = 'Custom CA',
+        private readonly ?string      $eabKid = null,
+        private readonly ?string      $eabHmac = null,
+        private readonly bool         $verifyTls = true,
         private readonly bool         $profilesSupported = false,
-        private readonly EabAlgorithm $eabAlgorithm      = EabAlgorithm::HS256,
-    ) {
-    }
+        private readonly EabAlgorithm $eabAlgorithm = EabAlgorithm::HS256,
+    ) {}
 
     public function getDirectoryUrl(): string
     {

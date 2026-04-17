@@ -109,7 +109,7 @@ abstract class Endpoint
         $this->client->logger($level, $message, array_merge([
             'url'    => $response->getRequestedUrl(),
             'status' => $response->getHttpResponseCode(),
-            'type'   => $body['type'] ?? null,
+            'type'   => $body['type']   ?? null,
             'detail' => $body['detail'] ?? null,
         ], $additionalContext));
     }

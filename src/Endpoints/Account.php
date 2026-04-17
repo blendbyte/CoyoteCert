@@ -210,7 +210,7 @@ class Account extends Endpoint
         return [
             'protected' => $protected64,
             'payload'   => $payload64,
-            'signature' => Base64::urlSafeEncode(hash_hmac($eab->algorithm->hashAlgorithm(), $protected64.'.'.$payload64, $hmacKey, true)),
+            'signature' => Base64::urlSafeEncode(hash_hmac($eab->algorithm->hashAlgorithm(), $protected64 . '.' . $payload64, $hmacKey, true)),
         ];
     }
 

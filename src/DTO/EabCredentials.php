@@ -10,6 +10,5 @@ readonly class EabCredentials
         public string       $kid,
         public string       $hmacKey,
         public EabAlgorithm $algorithm = EabAlgorithm::HS256,
-    ) {
-    }
+    ) {}
 }

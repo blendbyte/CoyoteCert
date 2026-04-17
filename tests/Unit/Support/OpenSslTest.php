@@ -1,7 +1,6 @@
 <?php
 
 use CoyoteCert\Enums\KeyType;
-use CoyoteCert\Exceptions\CryptoException;
 use CoyoteCert\Support\OpenSsl;
 
 // ── generateKey ───────────────────────────────────────────────────────────────

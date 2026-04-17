@@ -149,37 +149,37 @@ it('EcSigning::ecParamsFromKey() throws CryptoException for an unsupported EC cu
 // ── SEC-10: EcSigning::derToRaw() bounds checking ────────────────────────────
 
 it('derToRaw() throws CryptoException for an empty string', function () {
-    expect(fn () => \CoyoteCert\Support\EcSigning::derToRaw('', 32))
+    expect(fn() => \CoyoteCert\Support\EcSigning::derToRaw('', 32))
         ->toThrow(\CoyoteCert\Exceptions\CryptoException::class, 'Malformed DER');
 });
 
 it('derToRaw() throws CryptoException when first byte is not 0x30', function () {
-    expect(fn () => \CoyoteCert\Support\EcSigning::derToRaw("\x02\x04\x02\x01\x01\x02\x01\x01", 32))
+    expect(fn() => \CoyoteCert\Support\EcSigning::derToRaw("\x02\x04\x02\x01\x01\x02\x01\x01", 32))
         ->toThrow(\CoyoteCert\Exceptions\CryptoException::class, 'Malformed DER');
 });
 
 it('derToRaw() throws CryptoException when R tag byte is not 0x02', function () {
     // 0x30 [seq-len] 0x99 [r-len] ... — wrong R tag
-    expect(fn () => \CoyoteCert\Support\EcSigning::derToRaw("\x30\x06\x99\x01\x01\x02\x01\x01", 32))
+    expect(fn() => \CoyoteCert\Support\EcSigning::derToRaw("\x30\x06\x99\x01\x01\x02\x01\x01", 32))
         ->toThrow(\CoyoteCert\Exceptions\CryptoException::class, 'Malformed DER');
 });
 
 it('derToRaw() throws CryptoException when R length overflows the buffer', function () {
     // R claims length 100 but buffer is only 8 bytes
-    expect(fn () => \CoyoteCert\Support\EcSigning::derToRaw("\x30\x06\x02\x64\x01\x02\x01\x01", 32))
+    expect(fn() => \CoyoteCert\Support\EcSigning::derToRaw("\x30\x06\x02\x64\x01\x02\x01\x01", 32))
         ->toThrow(\CoyoteCert\Exceptions\CryptoException::class, 'Malformed DER');
 });
 
 it('derToRaw() throws CryptoException when S length overflows the buffer', function () {
     // Valid R (1 byte), but S claims length 100
-    expect(fn () => \CoyoteCert\Support\EcSigning::derToRaw("\x30\x06\x02\x01\x01\x02\x64\x01", 32))
+    expect(fn() => \CoyoteCert\Support\EcSigning::derToRaw("\x30\x06\x02\x01\x01\x02\x64\x01", 32))
         ->toThrow(\CoyoteCert\Exceptions\CryptoException::class, 'Malformed DER');
 });
 
 it('derToRaw() correctly converts a real P-256 DER signature', function () {
     // Generate a real signature and round-trip it through derToRaw() → rawSigToDer()
-    $pem  = ecKeyPem('prime256v1');
-    $key  = openssl_pkey_get_private($pem);
+    $pem = ecKeyPem('prime256v1');
+    $key = openssl_pkey_get_private($pem);
     openssl_sign('test-data', $der, $key, 'SHA256');
 
     $raw = \CoyoteCert\Support\EcSigning::derToRaw($der, 32);
