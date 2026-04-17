@@ -1480,6 +1480,61 @@ it('Certificate::getBundle() returns primary chain when no Link header is presen
     expect($parsed['subject']['CN'])->toBe('Default Root CA');
 });
 
+it('Certificate::getBundle() skips alternate chains that return non-200 and falls back to primary', function () {
+    $storage       = withKeyStorage();
+    $primaryBundle = makeCertBundle('Default Root CA');
+
+    $mock = closureMock(
+        getHandler: fn($url) => new Response([], $url, 200, directoryBody()),
+        postHandler: function ($url) use ($primaryBundle) {
+            if (str_contains($url, '/alt')) {
+                return new Response([], $url, 503, 'Service Unavailable');
+            }
+
+            return new Response(
+                ['link' => '<https://acme.example/cert/1/alt>;rel="alternate"'],
+                $url,
+                200,
+                $primaryBundle,
+            );
+        },
+    );
+
+    $bundle = makeEndpointApi($mock, $storage)->certificate()->getBundle(certOrderData(), 'ISRG Root X1');
+
+    preg_match_all('~(-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----)~i', $bundle->caBundle, $m);
+    $parsed = openssl_x509_parse($m[1][0]);
+    expect($parsed['subject']['CN'])->toBe('Default Root CA');
+});
+
+it('Certificate::getBundle() skips alternate chains whose caBundle is empty', function () {
+    $storage        = withKeyStorage();
+    $primaryBundle  = makeCertBundle('Default Root CA');
+    $leafOnlyBundle = "-----BEGIN CERTIFICATE-----\nMIIBtest==\n-----END CERTIFICATE-----\n";
+
+    $mock = closureMock(
+        getHandler: fn($url) => new Response([], $url, 200, directoryBody()),
+        postHandler: function ($url) use ($primaryBundle, $leafOnlyBundle) {
+            if (str_contains($url, '/alt')) {
+                return new Response([], $url, 200, $leafOnlyBundle);
+            }
+
+            return new Response(
+                ['link' => '<https://acme.example/cert/1/alt>;rel="alternate"'],
+                $url,
+                200,
+                $primaryBundle,
+            );
+        },
+    );
+
+    $bundle = makeEndpointApi($mock, $storage)->certificate()->getBundle(certOrderData(), 'ISRG Root X1');
+
+    preg_match_all('~(-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----)~i', $bundle->caBundle, $m);
+    $parsed = openssl_x509_parse($m[1][0]);
+    expect($parsed['subject']['CN'])->toBe('Default Root CA');
+});
+
 it('Certificate::getBundle() handles multiple Link headers (comma-separated) and selects matching chain', function () {
     $storage          = withKeyStorage();
     $primaryBundle    = makeCertBundle('Default Root CA');
