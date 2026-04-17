@@ -44,6 +44,12 @@ class DatabaseStorage implements StorageInterface
      */
     public static function createTableSql(string $table = 'coyote_cert_storage'): string
     {
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
+            throw new \InvalidArgumentException(
+                sprintf('Invalid SQL identifier "%s": only [a-zA-Z0-9_] are allowed.', $table)
+            );
+        }
+
         return <<<SQL
             CREATE TABLE IF NOT EXISTS `{$table}` (
                 `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
