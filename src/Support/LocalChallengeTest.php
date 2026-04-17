@@ -17,7 +17,7 @@ class LocalChallengeTest
         string $keyAuthorization,
         HttpClientInterface $httpClient
     ): void {
-        $response = $httpClient->get($domain . '/.well-known/acme-challenge/' . $token, maxRedirects: 1);
+        $response = $httpClient->get('http://' . $domain . '/.well-known/acme-challenge/' . $token, maxRedirects: 1);
 
         if (trim($response->rawBody()) === $keyAuthorization) {
             return;
