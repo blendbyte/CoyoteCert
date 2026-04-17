@@ -42,31 +42,31 @@ class TestableRoute53Handler extends Route53Dns01Handler
 
 function r53ZoneListXml(string $id, string $name): string
 {
-    return '<?xml version="1.0" encoding="UTF-8"?>' .
-        '<ListHostedZonesByNameResponse xmlns="https://route53.amazonaws.com/doc/2013-04-01/">' .
-        '<HostedZones>' .
-        '<HostedZone>' .
-        '<Id>/hostedzone/' . $id . '</Id>' .
-        '<Name>' . $name . '.</Name>' .
-        '</HostedZone>' .
-        '</HostedZones>' .
-        '</ListHostedZonesByNameResponse>';
+    return '<?xml version="1.0" encoding="UTF-8"?>'
+        . '<ListHostedZonesByNameResponse xmlns="https://route53.amazonaws.com/doc/2013-04-01/">'
+        . '<HostedZones>'
+        . '<HostedZone>'
+        . '<Id>/hostedzone/' . $id . '</Id>'
+        . '<Name>' . $name . '.</Name>'
+        . '</HostedZone>'
+        . '</HostedZones>'
+        . '</ListHostedZonesByNameResponse>';
 }
 
 function r53ZoneListEmptyXml(): string
 {
-    return '<?xml version="1.0" encoding="UTF-8"?>' .
-        '<ListHostedZonesByNameResponse xmlns="https://route53.amazonaws.com/doc/2013-04-01/">' .
-        '<HostedZones/>' .
-        '</ListHostedZonesByNameResponse>';
+    return '<?xml version="1.0" encoding="UTF-8"?>'
+        . '<ListHostedZonesByNameResponse xmlns="https://route53.amazonaws.com/doc/2013-04-01/">'
+        . '<HostedZones/>'
+        . '</ListHostedZonesByNameResponse>';
 }
 
 function r53ChangeOkXml(): string
 {
-    return '<?xml version="1.0" encoding="UTF-8"?>' .
-        '<ChangeResourceRecordSetsResponse xmlns="https://route53.amazonaws.com/doc/2013-04-01/">' .
-        '<ChangeInfo><Id>/change/C123</Id><Status>PENDING</Status></ChangeInfo>' .
-        '</ChangeResourceRecordSetsResponse>';
+    return '<?xml version="1.0" encoding="UTF-8"?>'
+        . '<ChangeResourceRecordSetsResponse xmlns="https://route53.amazonaws.com/doc/2013-04-01/">'
+        . '<ChangeInfo><Id>/change/C123</Id><Status>PENDING</Status></ChangeInfo>'
+        . '</ChangeResourceRecordSetsResponse>';
 }
 
 // ── deploy() with explicit zone ID ────────────────────────────────────────────
