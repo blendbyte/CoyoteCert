@@ -1535,6 +1535,19 @@ it('Certificate::getBundle() skips alternate chains whose caBundle is empty', fu
     expect($parsed['subject']['CN'])->toBe('Default Root CA');
 });
 
+it('chainMatchesIssuer() returns false when caBundle has no PEM certificate blocks', function () {
+    $cert   = makeEndpointApi(endpointMock(), withKeyStorage())->certificate();
+    $method = new \ReflectionMethod($cert, 'chainMatchesIssuer');
+
+    $bundle = new \CoyoteCert\DTO\CertificateBundleData(
+        certificate: '',
+        fullchain: '',
+        caBundle: 'not-a-pem-block',
+    );
+
+    expect($method->invoke($cert, $bundle, 'ISRG Root X1'))->toBeFalse();
+});
+
 it('Certificate::getBundle() handles multiple Link headers (comma-separated) and selects matching chain', function () {
     $storage          = withKeyStorage();
     $primaryBundle    = makeCertBundle('Default Root CA');
