@@ -5,6 +5,7 @@ namespace CoyoteCert;
 use CoyoteCert\DTO\AccountData;
 use CoyoteCert\DTO\Dns01ValidationData;
 use CoyoteCert\DTO\Http01ValidationData;
+use CoyoteCert\DTO\TlsAlpn01ValidationData;
 use CoyoteCert\DTO\OrderData;
 use CoyoteCert\DTO\RenewalWindow;
 use CoyoteCert\Enums\AuthorizationChallengeEnum;
@@ -467,13 +468,17 @@ class CoyoteCert
     /**
      * Returns [token, keyAuthorization] from a typed validation DTO.
      *
-     * @param Http01ValidationData|Dns01ValidationData $item
+     * @param Http01ValidationData|Dns01ValidationData|TlsAlpn01ValidationData $item
      * @return array{0: string, 1: string}
      */
-    private function extractTokenAndKeyAuth(Http01ValidationData|Dns01ValidationData $item): array
+    private function extractTokenAndKeyAuth(Http01ValidationData|Dns01ValidationData|TlsAlpn01ValidationData $item): array
     {
         if ($item instanceof Http01ValidationData) {
             return [$item->filename, $item->content];
+        }
+
+        if ($item instanceof TlsAlpn01ValidationData) {
+            return [$item->token, $item->keyAuthorization];
         }
 
         return [$item->name, $item->value];

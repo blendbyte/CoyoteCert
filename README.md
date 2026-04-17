@@ -11,7 +11,7 @@
 
 **A PHP 8.3+ ACME v2 client for issuing, renewing, and revoking TLS certificates.** Works with Let's Encrypt, ZeroSSL, Google Trust Services, SSL.com, Buypass, and any RFC 8555-compliant CA. Fluent API, no framework dependencies, and solid test coverage.
 
-ACME (Automatic Certificate Management Environment) is the protocol behind free, automated TLS certificates. CoyoteCert covers the full thing: account management, order lifecycle, HTTP-01 and DNS-01 challenges, certificate issuance, smart renewal with ARI, and revocation. One `composer require` and you're set.
+ACME (Automatic Certificate Management Environment) is the protocol behind free, automated TLS certificates. CoyoteCert covers the full thing: account management, order lifecycle, HTTP-01, DNS-01, and TLS-ALPN-01 challenges, certificate issuance, smart renewal with ARI, and revocation. One `composer require` and you're set.
 
 ---
 
@@ -234,7 +234,7 @@ CoyoteCert::with(new CustomProvider(
 
 ## Challenge handlers
 
-ACME requires you to prove domain ownership by completing a challenge. CoyoteCert ships with an HTTP-01 handler and an abstract base for DNS-persist-01. DNS-01 is implemented via the `ChallengeHandlerInterface`.
+ACME requires you to prove domain ownership by completing a challenge. CoyoteCert ships with an HTTP-01 handler and abstract bases for DNS-persist-01 and TLS-ALPN-01. DNS-01 is implemented via the `ChallengeHandlerInterface`.
 
 ### http-01
 
@@ -307,6 +307,40 @@ class Route53DnsPersist01Handler extends DnsPersist01Handler
 ```
 
 > **Note:** The TXT record value (`$keyAuthorization`) changes on every order, even with dns-persist-01. Your `deploy()` must update (upsert) the record, not skip it if it already exists.
+
+### tls-alpn-01
+
+Defined in [RFC 8737](https://datatracker.ietf.org/doc/html/rfc8737). The CA opens a TLS connection to port 443 of the domain and negotiates the `acme-tls/1` ALPN protocol. The server must present a self-signed certificate that contains a critical `id-pe-acmeIdentifier` extension (OID `1.3.6.1.5.5.7.1.31`) whose value is the SHA-256 digest of the key authorization. No port 80 access required.
+
+Extend `TlsAlpn01Handler` and implement `deploy()` and `cleanup()`. Call `generateAcmeCertificate()` inside `deploy()` to obtain the certificate and key — it handles all the RFC 8737 encoding automatically.
+
+```php
+use CoyoteCert\Challenge\TlsAlpn01Handler;
+
+class MyTlsAlpn01Handler extends TlsAlpn01Handler
+{
+    public function deploy(string $domain, string $token, string $keyAuthorization): void
+    {
+        ['cert' => $certPem, 'key' => $keyPem] =
+            $this->generateAcmeCertificate($domain, $keyAuthorization);
+
+        // Configure your TLS server to present $certPem/$keyPem for acme-tls/1
+        // connections on port 443, then reload it.
+        MyServer::loadAcmeCert($domain, $certPem, $keyPem);
+    }
+
+    public function cleanup(string $domain, string $token): void
+    {
+        MyServer::removeAcmeCert($domain);
+    }
+}
+```
+
+```php
+->challenge(new MyTlsAlpn01Handler())
+```
+
+> **Note:** TLS-ALPN-01 validates on port 443 only and does not require port 80. It is supported by Caddy, nginx (with the ACME plugin), and HAProxy. Wildcard certificates are not supported — use DNS-01 for those.
 
 ---
 
