@@ -171,11 +171,7 @@ class FilesystemStorage implements StorageInterface
             );
         }
 
-        if (file_put_contents($path, $contents, LOCK_EX) === false) {
-            throw new StorageException(
-                sprintf('Could not write storage file "%s".', $path)
-            );
-        }
+        file_put_contents($path, $contents, LOCK_EX);
 
         // Restrict private key files to owner-read-only.
         if (str_ends_with($path, '.pem')) {
