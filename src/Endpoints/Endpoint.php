@@ -99,7 +99,7 @@ abstract class Endpoint
         $retryAfter = (int) $response->getHeader('retry-after', 0);
 
         return $retryAfter > 0
-            ? $retryAfter
+            ? min($retryAfter, 64)
             : (int) min($baseDelay * (2 ** $attempt), 64);
     }
 
