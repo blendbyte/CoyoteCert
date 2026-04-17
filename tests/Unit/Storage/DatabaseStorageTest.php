@@ -118,6 +118,29 @@ it('constructor throws InvalidArgumentException for a table name with invalid ch
         ->toThrow(\InvalidArgumentException::class, 'Invalid SQL identifier');
 });
 
+it('set() uses ON CONFLICT syntax for pgsql driver', function () {
+    $mockPdo = new class extends \PDO {
+        public array $capturedSql = [];
+        public function __construct() {}
+        public function getAttribute(int $attribute): mixed { return 'pgsql'; }
+        public function prepare(string $query, array $options = []): \PDOStatement|false {
+            $this->capturedSql[] = $query;
+            return new class extends \PDOStatement {
+                public function execute(?array $params = null): bool { return true; }
+            };
+        }
+    };
+
+    $storage = new DatabaseStorage($mockPdo);
+    $storage->saveAccountKey('pem-data', KeyType::RSA_2048);
+
+    $pgsqlSqls = array_filter(
+        $mockPdo->capturedSql,
+        fn ($sql) => str_contains($sql, 'ON CONFLICT')
+    );
+    expect($pgsqlSqls)->not->toBeEmpty();
+});
+
 it('set() uses ON DUPLICATE KEY UPDATE syntax for non-sqlite/non-pgsql drivers', function () {
     // Mock PDO that reports 'mysql' as driver but records prepared SQL
     $mockPdo = new class extends \PDO {

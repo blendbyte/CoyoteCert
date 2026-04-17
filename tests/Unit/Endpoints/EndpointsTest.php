@@ -978,10 +978,20 @@ it('Certificate::getBundle() throws on non-200 response', function () {
         ->toThrow(AcmeException::class, 'Failed to fetch certificate');
 });
 
-it('Certificate::revoke() throws when PEM is invalid', function () {
+it('Certificate::revoke() throws when PEM is invalid (no header)', function () {
     $api = makeEndpointApi(endpointMock(getBody: directoryBody()), withKeyStorage());
 
     expect(fn () => $api->certificate()->revoke('not-a-valid-cert'))
+        ->toThrow(AcmeException::class, 'Could not parse the certificate');
+});
+
+it('Certificate::revoke() throws when PEM header is present but body is not a valid certificate', function () {
+    // Contains the required header so the str_contains guard passes,
+    // but the body is garbage so openssl_x509_read() returns false (line 36).
+    $api     = makeEndpointApi(endpointMock(getBody: directoryBody()), withKeyStorage());
+    $fakePem = "-----BEGIN CERTIFICATE-----\nnot-valid-base64!!!\n-----END CERTIFICATE-----";
+
+    expect(fn () => $api->certificate()->revoke($fakePem))
         ->toThrow(AcmeException::class, 'Could not parse the certificate');
 });
 
