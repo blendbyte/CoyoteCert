@@ -120,6 +120,7 @@ echo $cert->caBundle;    // PEM intermediate chain
 - [Challenge handlers](#challenge-handlers)
 - [Storage backends](#storage-backends)
 - [Issuing certificates](#issuing-certificates)
+- [Event callbacks](#event-callbacks)
 - [CAA pre-check](#caa-pre-check)
 - [Wildcard and multi-domain certificates](#wildcard-and-multi-domain-certificates)
 - [IP address certificates](#ip-address-certificates-rfc-8738)
@@ -537,6 +538,47 @@ Returns `true` when:
 
 ---
 
+## Event callbacks
+
+Register callbacks on the builder to react to certificate lifecycle events without subclassing or parsing log output. Useful for reloading a web server, pushing secrets to a vault, or sending a Slack notification.
+
+### onIssued
+
+Fires after every successful certificate issuance — whether first-time or a renewal.
+
+```php
+CoyoteCert::with(new LetsEncrypt())
+    ->storage(new FilesystemStorage('/var/certs'))
+    ->identifiers('example.com')
+    ->challenge(new Http01Handler('/var/www/html'))
+    ->onIssued(function (StoredCertificate $cert): void {
+        SecretsManager::push('tls/example.com', [
+            'cert'     => $cert->certificate,
+            'key'      => $cert->privateKey,
+            'fullchain'=> $cert->fullchain,
+        ]);
+    })
+    ->issueOrRenew();
+```
+
+### onRenewed
+
+Fires only when an existing certificate is replaced — i.e. storage already held a cert before the new one was issued. Fires _after_ `onIssued` callbacks.
+
+```php
+CoyoteCert::with(new LetsEncrypt())
+    ->storage(new FilesystemStorage('/var/certs'))
+    ->identifiers('example.com')
+    ->challenge(new Http01Handler('/var/www/html'))
+    ->onIssued(fn($cert) => SecretsManager::push('tls/example.com', $cert->toArray()))
+    ->onRenewed(fn($cert) => Nginx::reload())
+    ->issueOrRenew();
+```
+
+Both methods accept any `callable` and can be called multiple times. Callbacks run in registration order, after the certificate has been saved to storage.
+
+---
+
 ## CAA pre-check
 
 [CAA (Certification Authority Authorization)](https://en.wikipedia.org/wiki/DNS_Certification_Authority_Authorization) is a DNS record type that restricts which CAs are allowed to issue certificates for a domain. If `example.com` has `CAA 0 issue "digicert.com"`, Let's Encrypt will refuse the order — but only after you have consumed a rate-limit attempt and waited for the ACME workflow to fail.
@@ -660,10 +702,8 @@ $cert = CoyoteCert::with(new LetsEncrypt())
     ->identifiers(['example.com', 'www.example.com'])
     ->challenge(new Http01Handler('/var/www/html'))
     ->logger($logger)
+    ->onRenewed(fn($cert) => exec('systemctl reload nginx'))
     ->issueOrRenew(daysBeforeExpiry: 30);
-
-// Reload web server only if a new certificate was issued
-// (compare serial or expiry to detect renewal)
 ```
 
 Add to crontab. Daily is sufficient; `issueOrRenew()` skips the CA call when nothing is due:
@@ -894,6 +934,8 @@ CoyoteCert::with(AcmeProviderInterface $provider)  // factory — select the CA
 | `->logger(LoggerInterface)` | fluent | none | PSR-3 logger |
 | `->skipLocalTest()` | fluent | off | Disable pre-flight HTTP/DNS self-check |
 | `->skipCaaCheck()` | fluent | off | Disable CAA DNS pre-check (internal CAs, split-horizon DNS) |
+| `->onIssued(callable)` | fluent | none | Callback fired after every successful issuance; receives `StoredCertificate` |
+| `->onRenewed(callable)` | fluent | none | Callback fired when an existing cert is replaced; receives `StoredCertificate` |
 | `->issue()` | terminal | — | Issue unconditionally; returns `StoredCertificate` |
 | `->renew()` | terminal | — | Alias for `issue()` |
 | `->issueOrRenew(int $days = 30)` | terminal | — | Issue only when needed; returns `StoredCertificate` |
