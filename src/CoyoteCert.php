@@ -57,6 +57,10 @@ class CoyoteCert
     private KeyType                    $accountKeyType   = KeyType::EC_P256;
     private bool                       $localTest        = true;
     private bool                       $skipCaaCheck     = false;
+    /** @var callable[] */
+    private array $onIssuedCallbacks = [];
+    /** @var callable[] */
+    private array $onRenewedCallbacks = [];
 
     private function __construct(private readonly AcmeProviderInterface $provider) {}
 
@@ -181,6 +185,31 @@ class CoyoteCert
     }
 
     /**
+     * Register a callback invoked after every successful certificate issuance.
+     * The callback receives the issued StoredCertificate as its sole argument.
+     * Multiple callbacks may be registered; they run in registration order.
+     */
+    public function onIssued(callable $callback): self
+    {
+        $this->onIssuedCallbacks[] = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Register a callback invoked after a certificate is renewed (i.e. an existing
+     * certificate was replaced). Fires in addition to onIssued callbacks.
+     * The callback receives the new StoredCertificate as its sole argument.
+     * Multiple callbacks may be registered; they run in registration order.
+     */
+    public function onRenewed(callable $callback): self
+    {
+        $this->onRenewedCallbacks[] = $callback;
+
+        return $this;
+    }
+
+    /**
      * Set the HTTP timeout in seconds for the built-in curl client.
      * No-op when a custom PSR-18 client is configured.
      */
@@ -277,7 +306,10 @@ class CoyoteCert
         // Refresh order — status transitions pending → ready after all challenges pass
         $order = $api->order()->refresh($order);
 
-        return $this->fetchAndStoreCertificate($api, $order);
+        $stored = $this->fetchAndStoreCertificate($api, $order);
+        $this->fireIssuedCallbacks($stored, isRenewal: $existingCert !== null);
+
+        return $stored;
     }
 
     // ── Private issue() helpers ───────────────────────────────────────────────
@@ -357,6 +389,19 @@ class CoyoteCert
         }
 
         return $stored;
+    }
+
+    private function fireIssuedCallbacks(StoredCertificate $cert, bool $isRenewal): void
+    {
+        foreach ($this->onIssuedCallbacks as $cb) {
+            $cb($cert);
+        }
+
+        if ($isRenewal) {
+            foreach ($this->onRenewedCallbacks as $cb) {
+                $cb($cert);
+            }
+        }
     }
 
     /**

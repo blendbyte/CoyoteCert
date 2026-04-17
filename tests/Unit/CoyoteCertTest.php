@@ -393,6 +393,120 @@ it('withHttpTimeout() calls setTimeout on an already-configured HttpClient', fun
     expect($timeoutRef->getValue($client))->toBe(30);
 });
 
+// ── onIssued() / onRenewed() ──────────────────────────────────────────────────
+
+it('onIssued() returns self (fluent)', function () {
+    $c = makeCoyote();
+    expect($c->onIssued(fn($cert) => null))->toBe($c);
+});
+
+it('onRenewed() returns self (fluent)', function () {
+    $c = makeCoyote();
+    expect($c->onRenewed(fn($cert) => null))->toBe($c);
+});
+
+it('onIssued() registers multiple callbacks', function () {
+    $c = makeCoyote();
+    $c->onIssued(fn($cert) => null);
+    $c->onIssued(fn($cert) => null);
+
+    $ref = new \ReflectionProperty(CoyoteCert::class, 'onIssuedCallbacks');
+    expect($ref->getValue($c))->toHaveCount(2);
+});
+
+it('onRenewed() registers multiple callbacks', function () {
+    $c = makeCoyote();
+    $c->onRenewed(fn($cert) => null);
+    $c->onRenewed(fn($cert) => null);
+
+    $ref = new \ReflectionProperty(CoyoteCert::class, 'onRenewedCallbacks');
+    expect($ref->getValue($c))->toHaveCount(2);
+});
+
+it('fireIssuedCallbacks() invokes onIssued callbacks with the certificate', function () {
+    $cert     = makeCoyoteCert();
+    $coyote   = makeCoyote();
+    $received = null;
+
+    $coyote->onIssued(function ($c) use (&$received) {
+        $received = $c;
+    });
+
+    $method = new \ReflectionMethod(CoyoteCert::class, 'fireIssuedCallbacks');
+    $method->invoke($coyote, $cert, false);
+
+    expect($received)->toBe($cert);
+});
+
+it('fireIssuedCallbacks() does not invoke onRenewed callbacks when isRenewal is false', function () {
+    $cert   = makeCoyoteCert();
+    $coyote = makeCoyote();
+    $called = false;
+
+    $coyote->onRenewed(function () use (&$called) {
+        $called = true;
+    });
+
+    $method = new \ReflectionMethod(CoyoteCert::class, 'fireIssuedCallbacks');
+    $method->invoke($coyote, $cert, false);
+
+    expect($called)->toBeFalse();
+});
+
+it('fireIssuedCallbacks() invokes onRenewed callbacks when isRenewal is true', function () {
+    $cert     = makeCoyoteCert();
+    $coyote   = makeCoyote();
+    $received = null;
+
+    $coyote->onRenewed(function ($c) use (&$received) {
+        $received = $c;
+    });
+
+    $method = new \ReflectionMethod(CoyoteCert::class, 'fireIssuedCallbacks');
+    $method->invoke($coyote, $cert, true);
+
+    expect($received)->toBe($cert);
+});
+
+it('fireIssuedCallbacks() invokes both onIssued and onRenewed when isRenewal is true', function () {
+    $cert   = makeCoyoteCert();
+    $coyote = makeCoyote();
+    $log    = [];
+
+    $coyote->onIssued(function () use (&$log) {
+        $log[] = 'issued';
+    });
+    $coyote->onRenewed(function () use (&$log) {
+        $log[] = 'renewed';
+    });
+
+    $method = new \ReflectionMethod(CoyoteCert::class, 'fireIssuedCallbacks');
+    $method->invoke($coyote, $cert, true);
+
+    expect($log)->toBe(['issued', 'renewed']);
+});
+
+it('fireIssuedCallbacks() invokes callbacks in registration order', function () {
+    $cert   = makeCoyoteCert();
+    $coyote = makeCoyote();
+    $log    = [];
+
+    $coyote->onIssued(function () use (&$log) {
+        $log[] = 1;
+    });
+    $coyote->onIssued(function () use (&$log) {
+        $log[] = 2;
+    });
+    $coyote->onIssued(function () use (&$log) {
+        $log[] = 3;
+    });
+
+    $method = new \ReflectionMethod(CoyoteCert::class, 'fireIssuedCallbacks');
+    $method->invoke($coyote, $cert, false);
+
+    expect($log)->toBe([1, 2, 3]);
+});
+
 // ── extractTokenAndKeyAuth() ──────────────────────────────────────────────────
 
 it('extractTokenAndKeyAuth() returns [name, value] for Dns01ValidationData', function () {
