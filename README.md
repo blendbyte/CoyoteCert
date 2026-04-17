@@ -742,7 +742,6 @@ $coyote->revoke($cert, RevocationReason::AffiliationChanged);
 $coyote->revoke($cert, RevocationReason::Superseded);
 $coyote->revoke($cert, RevocationReason::CessationOfOperation);
 $coyote->revoke($cert, RevocationReason::CertificateHold);
-$coyote->revoke($cert, RevocationReason::RemoveFromCrl);
 $coyote->revoke($cert, RevocationReason::PrivilegeWithdrawn);
 $coyote->revoke($cert, RevocationReason::AaCompromise);
 ```
