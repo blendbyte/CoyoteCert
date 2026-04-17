@@ -1,3 +1,5 @@
+<img width="2560" height="1706" alt="coyotecert-banner-2560x1706" src="https://github.com/user-attachments/assets/d5510075-b62c-462f-a941-1d31b48bbec3" />
+
 # CoyoteCert
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/blendbyte/coyotecert.svg?style=flat-square)](https://packagist.org/packages/blendbyte/coyotecert)
@@ -47,7 +49,7 @@ Filesystem with file locking, PDO (MySQL, PostgreSQL, SQLite) with dialect-aware
 
 Before asking the CA to validate a domain, CoyoteCert performs a local check — fetches the HTTP challenge token or looks up the DNS TXT record itself. Misconfigured web servers and DNS propagation delays are caught before they waste a rate-limit attempt.
 
-### 93 %+ test coverage with real CA integration tests
+### 94 %+ test coverage with real CA integration tests
 
 Every code path is unit-tested with mocked responses. The integration suite runs against a live [Pebble](https://github.com/letsencrypt/pebble) ACME test server in CI across PHP 8.3, 8.4, and 8.5. No mock-only false confidence.
 
@@ -410,6 +412,11 @@ class RedisStorage implements StorageInterface
     {
         $this->redis->set("acme:cert:{$domain}", json_encode($cert->toArray()));
     }
+
+    public function deleteCertificate(string $domain): void
+    {
+        $this->redis->del("acme:cert:{$domain}");
+    }
 }
 ```
 
@@ -609,6 +616,12 @@ $coyote->revoke($cert, RevocationReason::PrivilegeWithdrawn);
 
 Returns `true` on success, `false` if the CA rejected the request.
 
+After revoking, remove the stored certificate so `issueOrRenew()` will request a fresh one:
+
+```php
+$storage->deleteCertificate('example.com');
+```
+
 ---
 
 ## PSR-18 HTTP client
@@ -691,6 +704,10 @@ $cert->domains      // string[] — domains as recorded at issuance time
 ### Methods
 
 ```php
+// Quick expiry checks
+$cert->isExpired();              // bool — true if the cert is past its expiry
+$cert->expiresWithin(30);        // bool — true if expiry is ≤ 30 days away
+
 // Days until expiry — 0 if already expired
 $cert->remainingDays();
 
@@ -747,7 +764,7 @@ CoyoteCert::with(AcmeProviderInterface $provider)  // factory — select the CA
 | `->renew()` | terminal | — | Alias for `issue()` |
 | `->issueOrRenew(int $days = 30)` | terminal | — | Issue only when needed; returns `StoredCertificate` |
 | `->needsRenewal(int $days = 30)` | query | — | `true` if renewal is needed |
-| `->revoke(StoredCertificate, int $reason = 0)` | terminal | — | Revoke a certificate |
+| `->revoke(StoredCertificate, RevocationReason)` | terminal | — | Revoke a certificate |
 
 ---
 
