@@ -38,6 +38,19 @@ class TestableRoute53Handler extends Route53Dns01Handler
     protected function pollForTxtRecord(string $domain, string $keyAuthorization): void {}
 }
 
+/**
+ * Handler that uses the real send() implementation (with curl stubs) but
+ * skips the DNS propagation check so tests run without a live DNS server.
+ */
+class Route53HandlerWithRealSend extends Route53Dns01Handler
+{
+    protected function pollForTxtRecord(string $domain, string $keyAuthorization): void {}
+}
+
+afterEach(function () {
+    unset($GLOBALS['__test_curl']);
+});
+
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 function r53ZoneListXml(string $id, string $name): string
@@ -293,4 +306,53 @@ it('cleanup clears the pending record so a second call is a no-op', function () 
     $handler->cleanup('example.com', ''); // no extra request
 
     expect($handler->captured)->toHaveCount(2);
+});
+
+// ── send() via real curl stubs ────────────────────────────────────────────────
+
+it('send() throws when curl_init fails', function () {
+    $GLOBALS['__test_curl'] = ['init' => false];
+
+    $handler = new Route53HandlerWithRealSend('AKID', 'secret', 'ZTEST');
+
+    expect(fn() => $handler->deploy('example.com', '', 'keyauth'))
+        ->toThrow(ChallengeException::class, 'Failed to initialise cURL for Route53.');
+});
+
+it('send() throws when curl reports a connection error', function () {
+    $GLOBALS['__test_curl'] = ['body' => false, 'error' => 'Connection refused'];
+
+    $handler = new Route53HandlerWithRealSend('AKID', 'secret', 'ZTEST');
+
+    expect(fn() => $handler->deploy('example.com', '', 'keyauth'))
+        ->toThrow(ChallengeException::class, 'Route53 HTTP request failed: Connection refused');
+});
+
+it('send() throws when the API returns HTTP 4xx', function () {
+    $GLOBALS['__test_curl'] = ['body' => '<Error/>', 'status' => 403];
+
+    $handler = new Route53HandlerWithRealSend('AKID', 'secret', 'ZTEST');
+
+    expect(fn() => $handler->deploy('example.com', '', 'keyauth'))
+        ->toThrow(ChallengeException::class, 'Route53 API returned HTTP 403');
+});
+
+it('send() returns the response body on success', function () {
+    $GLOBALS['__test_curl'] = ['body' => r53ChangeOkXml(), 'status' => 200];
+
+    $handler = new Route53HandlerWithRealSend('AKID', 'secret', 'ZTEST');
+
+    expect(fn() => $handler->deploy('example.com', '', 'keyauth'))
+        ->not->toThrow(\Throwable::class);
+});
+
+it('send() appends the query string to the URL for GET zone-detection requests', function () {
+    // Zone XML is returned for both the GET (zone lookup) and POST (record create).
+    // The POST response is ignored by changeRecord(), so this succeeds end-to-end.
+    $GLOBALS['__test_curl'] = ['body' => r53ZoneListXml('Z123', 'example.com'), 'status' => 200];
+
+    $handler = new Route53HandlerWithRealSend('AKID', 'secret'); // no zone ID → triggers GET
+
+    expect(fn() => $handler->deploy('example.com', '', 'keyauth'))
+        ->not->toThrow(\Throwable::class);
 });

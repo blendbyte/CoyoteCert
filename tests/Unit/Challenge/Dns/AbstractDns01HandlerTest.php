@@ -4,6 +4,10 @@ use CoyoteCert\Challenge\Dns\AbstractDns01Handler;
 use CoyoteCert\Enums\AuthorizationChallengeEnum;
 use CoyoteCert\Exceptions\DomainValidationException;
 
+afterEach(function () {
+    unset($GLOBALS['__test_time']);
+});
+
 // Concrete subclass for testing the abstract base.
 // Overrides pollForTxtRecord() so tests never make real DNS queries.
 class TestDns01Handler extends AbstractDns01Handler
@@ -130,6 +134,26 @@ it('real pollForTxtRecord fails open when the DNS lookup cannot be satisfied', f
     // Does not override pollForTxtRecord() — exercises the real implementation.
     // DNS fails for .invalid; propagationTimeout(1) keeps the poll window short.
     // Fails open: no exception is thrown when the timeout is reached.
+    expect(
+        fn() => $handler->propagationTimeout(1)->deploy('test.invalid', '', 'no-such-record'),
+    )->not->toThrow(\Throwable::class);
+});
+
+it('pollForTxtRecord sleeps between poll attempts when the deadline has not passed', function () {
+    // Freeze fake time so the deadline check is deterministic regardless of real DNS speed.
+    // sleep() in this namespace advances __test_time, so after sleep(5) the fake clock
+    // reads start+5, which is past the start+1 deadline — loop exits after one sleep call.
+    $GLOBALS['__test_time'] = \time();
+
+    $handler = new class extends AbstractDns01Handler {
+        public function deploy(string $domain, string $token, string $keyAuth): void
+        {
+            $this->awaitPropagation($domain, $keyAuth);
+        }
+
+        public function cleanup(string $domain, string $token): void {}
+    };
+
     expect(
         fn() => $handler->propagationTimeout(1)->deploy('test.invalid', '', 'no-such-record'),
     )->not->toThrow(\Throwable::class);
