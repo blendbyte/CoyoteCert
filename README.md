@@ -59,7 +59,7 @@ PHP 8.3+, strict types, backed enums, readonly constructor promotion, named argu
 
 ### Truly independent
 
-CoyoteCert has no affiliation with any certificate authority, not maintained by one, not financed by one. We run it on our own projects and for our customers, with whichever CA or provider the job calls for. We have a direct stake in it working well across all of them.
+CoyoteCert has no affiliation with any certificate authority, is not maintained by one or financed by one. We run it on our own projects and for our customers, with whichever CA or provider the job calls for. We have a direct stake in it working well across all of them.
 
 ---
 
