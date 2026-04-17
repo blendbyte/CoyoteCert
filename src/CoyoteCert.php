@@ -12,6 +12,7 @@ use CoyoteCert\Enums\AuthorizationChallengeEnum;
 use CoyoteCert\Enums\KeyType;
 use CoyoteCert\Enums\RevocationReason;
 use CoyoteCert\Exceptions\AcmeException;
+use CoyoteCert\Exceptions\CaaException;
 use CoyoteCert\Http\Client as HttpClient;
 use CoyoteCert\Http\Psr18Adapter;
 use CoyoteCert\Interfaces\ChallengeHandlerInterface;
@@ -19,6 +20,7 @@ use CoyoteCert\Interfaces\HttpClientInterface;
 use CoyoteCert\Provider\AcmeProviderInterface;
 use CoyoteCert\Storage\StorageInterface;
 use CoyoteCert\Storage\StoredCertificate;
+use CoyoteCert\Support\CaaChecker;
 use CoyoteCert\Support\OpenSsl;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
@@ -55,6 +57,7 @@ class CoyoteCert
     private KeyType                    $certKeyType      = KeyType::EC_P256;
     private KeyType                    $accountKeyType   = KeyType::EC_P256;
     private bool                       $localTest        = true;
+    private bool                       $skipCaaCheck     = false;
 
     private function __construct(private readonly AcmeProviderInterface $provider) {}
 
@@ -168,6 +171,17 @@ class CoyoteCert
     }
 
     /**
+     * Skip the CAA DNS pre-check before submitting the order to the CA.
+     * Useful when DNS is internal or the CAA records are managed outside your control.
+     */
+    public function skipCaaCheck(): self
+    {
+        $this->skipCaaCheck = true;
+
+        return $this;
+    }
+
+    /**
      * Set the HTTP timeout in seconds for the built-in curl client.
      * No-op when a custom PSR-18 client is configured.
      */
@@ -219,6 +233,17 @@ class CoyoteCert
     public function issue(): StoredCertificate
     {
         $this->validate();
+
+        if (!$this->skipCaaCheck) {
+            $domainIdentifiers = array_values(array_filter(
+                $this->domains,
+                static fn (string $id): bool => !filter_var($id, FILTER_VALIDATE_IP),
+            ));
+
+            if (!empty($domainIdentifiers)) {
+                (new CaaChecker())->check($domainIdentifiers, $this->provider->getCaaIdentifiers());
+            }
+        }
 
         $challengeHandler = $this->challengeHandler;
 

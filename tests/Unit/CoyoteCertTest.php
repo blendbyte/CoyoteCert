@@ -74,6 +74,11 @@ it('skipLocalTest() returns self (fluent)', function () {
     expect($c->skipLocalTest())->toBe($c);
 });
 
+it('skipCaaCheck() returns self (fluent)', function () {
+    $c = makeCoyote();
+    expect($c->skipCaaCheck())->toBe($c);
+});
+
 it('profile() returns self (fluent)', function () {
     $c = makeCoyote();
     expect($c->profile('shortlived'))->toBe($c);

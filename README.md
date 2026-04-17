@@ -49,6 +49,10 @@ The built-in curl client needs no extra dependencies. Need proxy support, custom
 
 Filesystem with file locking, PDO (MySQL, PostgreSQL, SQLite) with dialect-aware upserts, and in-memory for testing. All three share the same interface, so switching backends doesn't touch your issuance code.
 
+### CAA pre-check
+
+Before submitting an order, CoyoteCert queries CAA DNS records for every requested domain. If a record exists and excludes the chosen CA, you get an immediate `CaaException` naming the blocking domain — no wasted rate-limit attempt, no waiting for an ACME order to fail minutes later. The check follows RFC 8659 tree-walking, handles `issuewild` tags for wildcard domains, and respects parameter extensions (e.g. `letsencrypt.org; validationmethods=http-01`). CAA identifiers are built into every provider; `->skipCaaCheck()` opts out when DNS is internal or split-horizon.
+
 ### Pre-flight self-test
 
 Before asking the CA to validate, CoyoteCert does its own check first: it fetches the HTTP token or looks up the DNS TXT record itself. Misconfigured servers and propagation delays get caught before burning a rate-limit attempt.
@@ -116,7 +120,9 @@ echo $cert->caBundle;    // PEM intermediate chain
 - [Challenge handlers](#challenge-handlers)
 - [Storage backends](#storage-backends)
 - [Issuing certificates](#issuing-certificates)
+- [CAA pre-check](#caa-pre-check)
 - [Wildcard and multi-domain certificates](#wildcard-and-multi-domain-certificates)
+- [IP address certificates](#ip-address-certificates-rfc-8738)
 - [Automatic renewal](#automatic-renewal)
 - [ARI: CA-guided renewal windows](#ari-ca-guided-renewal-windows)
 - [ACME profiles](#acme-profiles)
@@ -136,18 +142,16 @@ echo $cert->caBundle;    // PEM intermediate chain
 
 CoyoteCert ships with built-in providers for every major public ACME CA.
 
-CoyoteCert is CA-independent and intentionally has no default provider. Every call to `CoyoteCert::with()` requires an explicit provider — this is by design. Choosing a CA involves real trade-offs (trust store coverage, rate limits, certificate lifetime, EAB requirements, data residency), and that choice belongs to you, not the library.
-
-| Provider class | CA | EAB | Profiles |
-|---|---|---|---|
-| `LetsEncrypt` | Let's Encrypt (production) | No | Yes |
-| `LetsEncryptStaging` | Let's Encrypt (staging) | No | Yes |
-| `ZeroSSL` | ZeroSSL | Yes | No |
-| `BuypassGo` | Buypass Go SSL (production) | No | No |
-| `BuypassGoStaging` | Buypass Go SSL (staging) | No | No |
-| `GoogleTrustServices` | Google Trust Services | Yes | No |
-| `SslCom` | SSL.com | Yes | No |
-| `CustomProvider` | Any RFC 8555-compliant CA | Optional | Optional |
+| Provider class | CA | EAB | Profiles | CAA identifier |
+|---|---|---|---|---|
+| `LetsEncrypt` | Let's Encrypt (production) | No | Yes | `letsencrypt.org` |
+| `LetsEncryptStaging` | Let's Encrypt (staging) | No | Yes | `letsencrypt.org` |
+| `ZeroSSL` | ZeroSSL | Yes | No | `sectigo.com`, `comodoca.com` |
+| `BuypassGo` | Buypass Go SSL (production) | No | No | `buypass.com` |
+| `BuypassGoStaging` | Buypass Go SSL (staging) | No | No | `buypass.com` |
+| `GoogleTrustServices` | Google Trust Services | Yes | No | `pki.goog` |
+| `SslCom` | SSL.com | Yes | No | `ssl.com` |
+| `CustomProvider` | Any RFC 8555-compliant CA | Optional | Optional | configurable (default: skip) |
 
 ### Let's Encrypt
 
@@ -227,6 +231,7 @@ CoyoteCert::with(new CustomProvider(
     verifyTls:         true,
     profilesSupported: false,
     eabAlgorithm:      EabAlgorithm::HS256, // HS256 (default), HS384, or HS512
+    caaIdentifiers:    ['myca.com'],      // CAA values that permit this CA; omit to skip CAA check
 ))
 ```
 
@@ -532,6 +537,55 @@ Returns `true` when:
 
 ---
 
+## CAA pre-check
+
+[CAA (Certification Authority Authorization)](https://en.wikipedia.org/wiki/DNS_Certification_Authority_Authorization) is a DNS record type that restricts which CAs are allowed to issue certificates for a domain. If `example.com` has `CAA 0 issue "digicert.com"`, Let's Encrypt will refuse the order — but only after you have consumed a rate-limit attempt and waited for the ACME workflow to fail.
+
+CoyoteCert runs the CAA check itself before submitting anything to the CA. If the records block the chosen CA, you get a `CaaException` immediately:
+
+```php
+use CoyoteCert\Exceptions\CaaException;
+
+try {
+    $cert = CoyoteCert::with(new LetsEncrypt())
+        ->identifiers('example.com')
+        ->challenge(new Http01Handler('/var/www/html'))
+        ->issue();
+} catch (CaaException $e) {
+    // e.g. 'CAA records for "example.com" do not permit issuance by this CA
+    //       (expected one of: letsencrypt.org).'
+    echo $e->getMessage();
+}
+```
+
+### How the check works
+
+1. For each domain in `->identifiers()`, CoyoteCert queries CAA records at the exact name.
+2. If no records are found, it walks up one label at a time (`sub.example.com` → `example.com`) until records are found or the second-level domain is exhausted.
+3. If no records exist anywhere in the tree, the domain has an open policy and any CA may issue.
+4. For wildcard domains (`*.example.com`), `issuewild` records are checked first; the check falls back to `issue` records if no `issuewild` records exist.
+5. Parameter extensions after a semicolon (`letsencrypt.org; validationmethods=http-01`) are stripped before comparison.
+
+`CaaException` extends `AcmeException`, so existing catch blocks for the base type continue to work.
+
+IP address identifiers are excluded from the CAA check — CAA records apply to domain names only.
+
+### Opting out
+
+Skip the CAA check when DNS is internal, split-horizon, or otherwise unreachable from the issuing host:
+
+```php
+CoyoteCert::with(new LetsEncrypt())
+    ->identifiers('example.com')
+    ->challenge(new Http01Handler('/var/www/html'))
+    ->skipCaaCheck()
+    ->issue();
+```
+
+`Pebble` and `CustomProvider` (without explicit `caaIdentifiers`) skip the check automatically, since their CAA identifiers are unknown.
+
+---
+
 ## Wildcard and multi-domain certificates
 
 Pass an array of domains to `->identifiers()`. Wildcards require DNS-01 or dns-persist-01.
@@ -829,7 +883,7 @@ CoyoteCert::with(AcmeProviderInterface $provider)  // factory — select the CA
 | Method | Type | Default | Description |
 |---|---|---|---|
 | `->email(string)` | fluent | `''` | Contact email; required for ZeroSSL auto-provisioning |
-| `->identifiers(string\|array)` | fluent | — | Domain(s) to certify; first entry is the primary |
+| `->identifiers(string\|array)` | fluent | — | Domain(s) and/or IP(s) to certify; first entry is the primary |
 | `->challenge(ChallengeHandlerInterface)` | fluent | — | Challenge handler |
 | `->storage(StorageInterface)` | fluent | none | Storage backend |
 | `->keyType(KeyType)` | fluent | `EC_P256` | Certificate key algorithm |
@@ -839,6 +893,7 @@ CoyoteCert::with(AcmeProviderInterface $provider)  // factory — select the CA
 | `->withHttpTimeout(int)` | fluent | `10` | Curl timeout in seconds |
 | `->logger(LoggerInterface)` | fluent | none | PSR-3 logger |
 | `->skipLocalTest()` | fluent | off | Disable pre-flight HTTP/DNS self-check |
+| `->skipCaaCheck()` | fluent | off | Disable CAA DNS pre-check (internal CAs, split-horizon DNS) |
 | `->issue()` | terminal | — | Issue unconditionally; returns `StoredCertificate` |
 | `->renew()` | terminal | — | Alias for `issue()` |
 | `->issueOrRenew(int $days = 30)` | terminal | — | Issue only when needed; returns `StoredCertificate` |
@@ -942,5 +997,3 @@ services:
 This project is maintained by **[Blendbyte](https://www.blendbyte.com)**, a team of engineers with 20+ years of experience building cloud infrastructure, web applications, and developer tools. We use these packages in production and contribute to the open source ecosystem we rely on every day. Issues and PRs are always welcome.
 
 🌐 [blendbyte.com](https://www.blendbyte.com) · 📧 [hello@blendbyte.com](mailto:hello@blendbyte.com)
-
-<br clear="left">
