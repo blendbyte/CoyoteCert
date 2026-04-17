@@ -32,11 +32,7 @@ class Order extends Endpoint
             ];
         }
 
-        $payload = [
-            'identifiers' => $identifiers,
-            'notBefore' => '',
-            'notAfter' => '',
-        ];
+        $payload = ['identifiers' => $identifiers];
 
         if ($profile !== '' && $this->client->getProvider()->supportsProfiles()) {
             $payload['profile'] = $profile;
@@ -51,6 +47,17 @@ class Order extends Endpoint
 
         if ($response->getHttpResponseCode() === 201) {
             return OrderData::fromResponse($response, $accountData->url);
+        }
+
+        // If the `replaces` ARI hint was rejected, retry without it — the CA
+        // may not recognise the issuer hash (e.g. Pebble with a self-signed CA).
+        if ($replacesId !== '' && $response->getHttpResponseCode() === 400) {
+            unset($payload['replaces']);
+            $response = $this->postSigned($newOrderUrl, $accountData->url, $payload);
+
+            if ($response->getHttpResponseCode() === 201) {
+                return OrderData::fromResponse($response, $accountData->url);
+            }
         }
 
         $this->logResponse('error', 'Creating new order failed; bad response code.', $response, ['payload' => $payload]);
