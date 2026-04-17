@@ -108,7 +108,7 @@ it('fails for sslcom provider without EAB credentials', function () {
 
 // ── Happy path / exception paths (via stub) ───────────────────────────────────
 
-function makeIssueCert(int $daysUntilExpiry = 90, bool $wasIssued = true): array
+function makeIssueCert(int $daysUntilExpiry = 90, bool $wasIssued = true, KeyType $keyType = KeyType::EC_P256): array
 {
     $cert = new StoredCertificate(
         certificate: 'fake-pem',
@@ -118,7 +118,7 @@ function makeIssueCert(int $daysUntilExpiry = 90, bool $wasIssued = true): array
         issuedAt: new DateTimeImmutable('-1 day'),
         expiresAt: (new DateTimeImmutable())->modify("+{$daysUntilExpiry} days"),
         domains: ['example.com'],
-        keyType: KeyType::EC_P256,
+        keyType: $keyType,
     );
 
     return [$cert, $wasIssued];
@@ -222,6 +222,52 @@ it('passes through --email --skip-caa and --skip-local-test without error', func
 
 it('passes --force to performIssue and succeeds', function () {
     [$code] = runStub(makeIssueCert(), ['--force' => true]);
+
+    expect($code)->toBe(Command::SUCCESS);
+});
+
+// ── key type labels in renderSuccess ─────────────────────────────────────────
+
+it('shows EC P-384 key type label in success output', function () {
+    [$code, $output] = runStub(
+        makeIssueCert(keyType: KeyType::EC_P384),
+        ['--key-type' => 'ec384'],
+    );
+
+    expect($code)->toBe(Command::SUCCESS);
+    expect($output)->toContain('EC P-384');
+});
+
+it('shows RSA 2048 key type label in success output', function () {
+    [$code, $output] = runStub(
+        makeIssueCert(keyType: KeyType::RSA_2048),
+        ['--key-type' => 'rsa2048'],
+    );
+
+    expect($code)->toBe(Command::SUCCESS);
+    expect($output)->toContain('RSA 2048');
+});
+
+it('shows RSA 4096 key type label in success output', function () {
+    [$code, $output] = runStub(
+        makeIssueCert(keyType: KeyType::RSA_4096),
+        ['--key-type' => 'rsa4096'],
+    );
+
+    expect($code)->toBe(Command::SUCCESS);
+    expect($output)->toContain('RSA 4096');
+});
+
+// ── expiry colour branches in renderSuccess ───────────────────────────────────
+
+it('uses warning colour when certificate expires within 7 days', function () {
+    [$code] = runStub(makeIssueCert(daysUntilExpiry: 5));
+
+    expect($code)->toBe(Command::SUCCESS);
+});
+
+it('uses caution colour when certificate expires within 30 days', function () {
+    [$code] = runStub(makeIssueCert(daysUntilExpiry: 20));
 
     expect($code)->toBe(Command::SUCCESS);
 });
