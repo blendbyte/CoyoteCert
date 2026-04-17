@@ -6,8 +6,8 @@ use CoyoteCert\DTO\AccountData;
 use CoyoteCert\DTO\Dns01ValidationData;
 use CoyoteCert\DTO\DomainValidationData;
 use CoyoteCert\DTO\Http01ValidationData;
-use CoyoteCert\DTO\TlsAlpn01ValidationData;
 use CoyoteCert\DTO\OrderData;
+use CoyoteCert\DTO\TlsAlpn01ValidationData;
 use CoyoteCert\Enums\AuthorizationChallengeEnum;
 use CoyoteCert\Exceptions\DomainValidationException;
 use CoyoteCert\Http\Response;
@@ -159,7 +159,7 @@ class DomainValidation extends Endpoint
                 );
             }
 
-            if ($authChallenge === AuthorizationChallengeEnum::DNS
+            if ($authChallenge    === AuthorizationChallengeEnum::DNS
                 || $authChallenge === AuthorizationChallengeEnum::DNS_PERSIST) {
                 LocalChallengeTest::dns(
                     $domainValidation->identifier['value'],

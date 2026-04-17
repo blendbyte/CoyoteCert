@@ -131,9 +131,9 @@ abstract class TlsAlpn01Handler implements ChallengeHandlerInterface
     private function buildConfig(string $domain, string $hexDer): string
     {
         return sprintf(
-            "[req]\ndistinguished_name=req_dn\nx509_extensions=v3_acme\nprompt=no\n\n" .
-            "[req_dn]\nCN=%s\n\n" .
-            "[v3_acme]\nsubjectAltName=DNS:%s\n1.3.6.1.5.5.7.1.31=critical,DER:%s\n",
+            "[req]\ndistinguished_name=req_dn\nx509_extensions=v3_acme\nprompt=no\n\n"
+            . "[req_dn]\nCN=%s\n\n"
+            . "[v3_acme]\nsubjectAltName=DNS:%s\n1.3.6.1.5.5.7.1.31=critical,DER:%s\n",
             $domain,
             $domain,
             $hexDer,
