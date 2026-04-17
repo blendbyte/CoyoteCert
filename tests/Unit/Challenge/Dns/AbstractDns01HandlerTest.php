@@ -41,7 +41,10 @@ it('challengeName prepends _acme-challenge', function () {
     $handler = new class extends AbstractDns01Handler {
         public function deploy(string $d, string $t, string $k): void {}
         public function cleanup(string $d, string $t): void {}
-        public function name(string $domain): string { return $this->challengeName($domain); }
+        public function name(string $domain): string
+        {
+            return $this->challengeName($domain);
+        }
     };
 
     expect($handler->name('example.com'))->toBe('_acme-challenge.example.com');
@@ -59,7 +62,7 @@ it('propagationDelay returns a new immutable instance', function () {
 it('propagationDelay clamps negative values to zero', function () {
     // Negative delays should not cause a sleep — verify no exception is thrown
     $handler = (new TestDns01Handler())->propagationDelay(-10);
-    expect(fn () => $handler->deploy('example.com', 't', 'k'))->not->toThrow(\Throwable::class);
+    expect(fn() => $handler->deploy('example.com', 't', 'k'))->not->toThrow(\Throwable::class);
 });
 
 it('deploy and cleanup record their arguments', function () {

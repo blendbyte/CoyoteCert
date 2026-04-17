@@ -48,7 +48,7 @@ abstract class AbstractDns01Handler implements ChallengeHandlerInterface
      */
     public function propagationDelay(int $seconds): static
     {
-        $clone = clone $this;
+        $clone                       = clone $this;
         $clone->propagationDelaySecs = max(0, $seconds);
 
         return $clone;
