@@ -28,6 +28,10 @@ class Certificate extends Endpoint
 
     public function revoke(string $pem, int $reason = 0): bool
     {
+        if (!str_contains($pem, '-----BEGIN CERTIFICATE-----')) {
+            throw new AcmeException('Could not parse the certificate.');
+        }
+
         if (($data = openssl_x509_read($pem)) === false) {
             throw new AcmeException('Could not parse the certificate.');
         }

@@ -102,6 +102,12 @@ class FilesystemStorage implements StorageInterface
     {
         $dir = $this->dir();
 
+        if (file_exists(rtrim($dir, '/')) && !is_dir($dir)) {
+            throw new StorageException(
+                sprintf('Storage directory "%s" could not be created: path exists as a file.', $dir)
+            );
+        }
+
         if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {
             throw new StorageException(
                 sprintf('Storage directory "%s" could not be created.', $dir)

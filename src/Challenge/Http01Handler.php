@@ -32,6 +32,12 @@ class Http01Handler implements ChallengeHandlerInterface
     {
         $dir = $this->challengeDir();
 
+        if ($this->ancestorBlocksMkdir($dir)) {
+            throw new ChallengeException(
+                sprintf('Could not create challenge directory "%s".', $dir)
+            );
+        }
+
         if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
             throw new ChallengeException(
                 sprintf('Could not create challenge directory "%s".', $dir)
@@ -39,6 +45,12 @@ class Http01Handler implements ChallengeHandlerInterface
         }
 
         $path = $dir . $token;
+
+        if (is_dir($path)) {
+            throw new ChallengeException(
+                sprintf('Could not write challenge file "%s": path is a directory.', $path)
+            );
+        }
 
         if (file_put_contents($path, $keyAuthorization) === false) {
             throw new ChallengeException(
@@ -59,5 +71,17 @@ class Http01Handler implements ChallengeHandlerInterface
     private function challengeDir(): string
     {
         return rtrim($this->webroot, '/') . '/.well-known/acme-challenge/';
+    }
+
+    private function ancestorBlocksMkdir(string $dir): bool
+    {
+        $path = rtrim($dir, '/\\');
+        while ($path !== '' && $path !== dirname($path)) {
+            if (file_exists($path)) {
+                return !is_dir($path);
+            }
+            $path = dirname($path);
+        }
+        return false;
     }
 }

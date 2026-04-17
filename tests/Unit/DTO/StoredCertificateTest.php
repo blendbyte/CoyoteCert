@@ -214,3 +214,79 @@ it('issuer() returns an empty array for an unparseable certificate', function ()
 
     expect($cert->issuer())->toBe([]);
 });
+
+// ── daysUntilExpiry() ─────────────────────────────────────────────────────────
+
+it('daysUntilExpiry() returns a positive integer for a future certificate', function () {
+    $cert = makeCert([
+        'expiresAt' => new DateTimeImmutable('+30 days'),
+    ]);
+
+    expect($cert->daysUntilExpiry())->toBeGreaterThan(0);
+    expect($cert->daysUntilExpiry())->toBeBetween(29, 31);
+});
+
+it('daysUntilExpiry() returns a negative value for an expired certificate', function () {
+    $cert = makeCert([
+        'expiresAt' => new DateTimeImmutable('-10 days'),
+    ]);
+
+    expect($cert->daysUntilExpiry())->toBeLessThan(0);
+});
+
+it('daysUntilExpiry() uses ceiling so a partial day counts as a full day', function () {
+    // Expire in slightly more than 1 day: result should be 2 (ceiling)
+    $cert = makeCert([
+        'expiresAt' => new DateTimeImmutable('+1 day +1 second'),
+    ]);
+
+    expect($cert->daysUntilExpiry())->toBe(2);
+});
+
+it('daysUntilExpiry() returns 0 or 1 for a cert expiring within the next day', function () {
+    $cert = makeCert([
+        'expiresAt' => new DateTimeImmutable('+1 hour'),
+    ]);
+
+    expect($cert->daysUntilExpiry())->toBeBetween(0, 1);
+});
+
+// ── isValidForDomains() ───────────────────────────────────────────────────────
+
+it('isValidForDomains() returns true when requested domains are in the SAN', function () {
+    $pem  = makeStoredCertPem(['example.com', 'www.example.com']);
+    $cert = makeCert(['certificate' => $pem]);
+
+    expect($cert->isValidForDomains(['example.com']))->toBeTrue();
+    expect($cert->isValidForDomains(['www.example.com']))->toBeTrue();
+    expect($cert->isValidForDomains(['example.com', 'www.example.com']))->toBeTrue();
+});
+
+it('isValidForDomains() returns false when a domain is not in the SAN', function () {
+    $pem  = makeStoredCertPem(['example.com']);
+    $cert = makeCert(['certificate' => $pem]);
+
+    expect($cert->isValidForDomains(['other.com']))->toBeFalse();
+});
+
+it('isValidForDomains() returns true when a wildcard SAN covers the domain', function () {
+    $pem  = makeStoredCertPem(['*.example.com']);
+    $cert = makeCert(['certificate' => $pem]);
+
+    expect($cert->isValidForDomains(['sub.example.com']))->toBeTrue();
+});
+
+it('isValidForDomains() wildcard does NOT cover the apex domain itself', function () {
+    $pem  = makeStoredCertPem(['*.example.com']);
+    $cert = makeCert(['certificate' => $pem]);
+
+    // *.example.com does not cover example.com (RFC 2818 §3.1)
+    expect($cert->isValidForDomains(['example.com']))->toBeFalse();
+});
+
+it('isValidForDomains() returns false when one of several requested domains is missing', function () {
+    $pem  = makeStoredCertPem(['example.com']);
+    $cert = makeCert(['certificate' => $pem]);
+
+    expect($cert->isValidForDomains(['example.com', 'missing.com']))->toBeFalse();
+});

@@ -44,6 +44,10 @@ class LocalFileAccount implements AcmeAccountInterface
         $keyType = $keyTypeOverride ?? KeyType::EC_P256;
         $dir     = rtrim($this->accountKeysPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 
+        if (file_exists(rtrim($dir, DIRECTORY_SEPARATOR)) && !is_dir($dir)) {
+            throw new StorageException(sprintf('Directory "%s" was not created: path exists as a file', $dir));
+        }
+
         if (!is_dir($dir) && !mkdir($dir) && !is_dir($dir)) {
             throw new StorageException(sprintf('Directory "%s" was not created', $dir));
         }
