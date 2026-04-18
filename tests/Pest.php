@@ -111,7 +111,6 @@ namespace CoyoteCert\Challenge\Dns {
         return \curl_error($handle);
     }
 
-
     function proc_open(
         string|array $command,
         array $descriptorspec,
@@ -275,7 +274,7 @@ namespace {
                     CURLOPT_CONNECTTIMEOUT => 2,
                 ]);
                 curl_exec($ch);
-                $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $code   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 $result = $code > 0;
             }
         }
