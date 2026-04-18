@@ -91,14 +91,14 @@ class StatusCommand extends Command
             default     => ['✓', 'Valid', 'text-green-500'],
         };
 
-        $daysColor   = $expired || $days <= 7 ? 'text-red-500' : ($days <= 30 ? 'text-yellow-500' : 'text-green-400');
-        $expiresDate = $cert->expiresAt->format('M j, Y');
-        $expiresStr  = sprintf('%s (%d days remaining)', $expiresDate, $days);
-        $issuedDate  = $cert->issuedAt->format('M j, Y');
+        $daysColor      = $expired || $days <= 7 ? 'text-red-500' : ($days <= 30 ? 'text-yellow-500' : 'text-green-400');
+        $expiresDate    = $cert->expiresAt->format('M j, Y');
+        $expiresStr     = sprintf('%s (%d days remaining)', $expiresDate, $days);
+        $issuedDate     = $cert->issuedAt->format('M j, Y');
         $identifiersStr = implode(', ', $cert->domains);
-        $sans        = $cert->sans();
-        $sansStr     = empty($sans) ? $identifiersStr : implode(', ', $sans);
-        $keyLabel    = match ($cert->keyType) {
+        $sans           = $cert->sans();
+        $sansStr        = empty($sans) ? $identifiersStr : implode(', ', $sans);
+        $keyLabel       = match ($cert->keyType) {
             KeyType::EC_P256  => 'EC P-256',
             KeyType::EC_P384  => 'EC P-384',
             KeyType::RSA_2048 => 'RSA 2048',

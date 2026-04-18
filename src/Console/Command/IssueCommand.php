@@ -196,9 +196,9 @@ class IssueCommand extends Command
         $color   = $wasIssued ? 'text-green-500' : 'text-blue-500';
 
         $identifiersStr = implode(', ', $cert->domains);
-        $keyLabel   = $this->keyTypeLabel($cert->keyType);
-        $days       = $cert->remainingDays();
-        $daysColor  = match (true) {
+        $keyLabel       = $this->keyTypeLabel($cert->keyType);
+        $days           = $cert->remainingDays();
+        $daysColor      = match (true) {
             $days <= 7  => 'text-red-500',
             $days <= 30 => 'text-yellow-500',
             default     => 'text-green-400',

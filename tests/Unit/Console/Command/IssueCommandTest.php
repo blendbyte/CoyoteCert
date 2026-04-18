@@ -53,8 +53,8 @@ it('fails when neither --webroot nor --dns is provided', function () {
 
 it('fails when --provider is not provided', function () {
     [$code, $output] = runIssue([
-        '--identifier'  => ['example.com'],
-        '--webroot' => '/tmp',
+        '--identifier' => ['example.com'],
+        '--webroot'    => '/tmp',
     ]);
 
     expect($code)->toBe(Command::FAILURE);
@@ -63,9 +63,9 @@ it('fails when --provider is not provided', function () {
 
 it('fails for an unknown --provider', function () {
     [$code, $output] = runIssue([
-        '--identifier'   => ['example.com'],
-        '--webroot'  => '/tmp',
-        '--provider' => 'nonexistent-ca',
+        '--identifier' => ['example.com'],
+        '--webroot'    => '/tmp',
+        '--provider'   => 'nonexistent-ca',
     ]);
 
     expect($code)->toBe(Command::FAILURE);
@@ -74,10 +74,10 @@ it('fails for an unknown --provider', function () {
 
 it('fails for an unknown --key-type', function () {
     [$code, $output] = runIssue([
-        '--identifier'   => ['example.com'],
-        '--webroot'  => '/tmp',
-        '--provider' => 'letsencrypt',
-        '--key-type' => 'rsa9999',
+        '--identifier' => ['example.com'],
+        '--webroot'    => '/tmp',
+        '--provider'   => 'letsencrypt',
+        '--key-type'   => 'rsa9999',
     ]);
 
     expect($code)->toBe(Command::FAILURE);
@@ -86,9 +86,9 @@ it('fails for an unknown --key-type', function () {
 
 it('fails for google provider without EAB credentials', function () {
     [$code, $output] = runIssue([
-        '--identifier'   => ['example.com'],
-        '--webroot'  => '/tmp',
-        '--provider' => 'google',
+        '--identifier' => ['example.com'],
+        '--webroot'    => '/tmp',
+        '--provider'   => 'google',
     ]);
 
     expect($code)->toBe(Command::FAILURE);
@@ -97,9 +97,9 @@ it('fails for google provider without EAB credentials', function () {
 
 it('fails for sslcom provider without EAB credentials', function () {
     [$code, $output] = runIssue([
-        '--identifier'   => ['example.com'],
-        '--webroot'  => '/tmp',
-        '--provider' => 'sslcom',
+        '--identifier' => ['example.com'],
+        '--webroot'    => '/tmp',
+        '--provider'   => 'sslcom',
     ]);
 
     expect($code)->toBe(Command::FAILURE);
@@ -153,10 +153,10 @@ function runStub(mixed $result, array $input = []): array
 {
     $tester = new CommandTester(new StubIssueCommand($result));
     $tester->execute(array_merge([
-        '--identifier'   => ['example.com'],
-        '--webroot'  => '/tmp',
-        '--storage'  => sys_get_temp_dir(),
-        '--provider' => 'letsencrypt',
+        '--identifier' => ['example.com'],
+        '--webroot'    => '/tmp',
+        '--storage'    => sys_get_temp_dir(),
+        '--provider'   => 'letsencrypt',
     ], $input));
 
     return [$tester->getStatusCode(), test()->buffer->fetch()];
