@@ -3,6 +3,7 @@
 namespace CoyoteCert\Console\Command;
 
 use CoyoteCert\Challenge\Http01Handler;
+use CoyoteCert\Console\DnsHandlerResolver;
 use CoyoteCert\Console\ProviderResolver;
 use CoyoteCert\CoyoteCert;
 use CoyoteCert\Enums\KeyType;
@@ -27,6 +28,7 @@ class IssueCommand extends Command
             ->addOption('domain', 'd', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Domain name(s) to include on the certificate')
             ->addOption('email', 'e', InputOption::VALUE_REQUIRED, 'Contact email for the ACME account')
             ->addOption('webroot', 'w', InputOption::VALUE_REQUIRED, 'Webroot path for HTTP-01 challenge (.well-known/acme-challenge will be written here)')
+            ->addOption('dns', null, InputOption::VALUE_REQUIRED, 'DNS provider for DNS-01 challenge: cloudflare, hetzner, digitalocean, cloudns, route53, exec')
             ->addOption('provider', 'p', InputOption::VALUE_REQUIRED, 'CA to use: letsencrypt, letsencrypt-staging, zerossl, google, buypass, buypass-staging, sslcom')
             ->addOption('storage', 's', InputOption::VALUE_REQUIRED, 'Directory to store certificates and account keys', './certs')
             ->addOption('days', null, InputOption::VALUE_REQUIRED, 'Days before expiry to trigger renewal', '30')
@@ -41,9 +43,10 @@ class IssueCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $domains  = $input->getOption('domain');
-        $webroot  = $input->getOption('webroot');
-        $provider = $input->getOption('provider');
+        $domains     = $input->getOption('domain');
+        $webroot     = $input->getOption('webroot');
+        $dnsProvider = $input->getOption('dns');
+        $provider    = $input->getOption('provider');
 
         if (empty($domains)) {
             $this->renderError('No domains specified. Use --domain example.com (repeatable for SANs).');
@@ -51,8 +54,8 @@ class IssueCommand extends Command
             return Command::FAILURE;
         }
 
-        if ($webroot === null) {
-            $this->renderError('--webroot is required for HTTP-01 challenge validation.');
+        if ($dnsProvider === null && $webroot === null) {
+            $this->renderError('Either --webroot (HTTP-01) or --dns (DNS-01) is required.');
 
             return Command::FAILURE;
         }
@@ -88,10 +91,22 @@ class IssueCommand extends Command
         $days        = max(1, (int) $input->getOption('days'));
         $force       = $input->getOption('force');
 
+        if ($dnsProvider !== null) {
+            try {
+                $challengeHandler = DnsHandlerResolver::resolve($dnsProvider);
+            } catch (\InvalidArgumentException $e) {
+                $this->renderError($e->getMessage());
+
+                return Command::FAILURE;
+            }
+        } else {
+            $challengeHandler = new Http01Handler($webroot);
+        }
+
         $coyote = CoyoteCert::with($acmeProvider)
             ->storage(new FilesystemStorage($storagePath))
             ->identifiers($domains)
-            ->challenge(new Http01Handler($webroot))
+            ->challenge($challengeHandler)
             ->keyType($keyType);
 
         if ($input->getOption('email')) {

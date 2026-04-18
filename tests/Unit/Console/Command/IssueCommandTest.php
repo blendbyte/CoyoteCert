@@ -44,11 +44,11 @@ it('fails when no --domain is provided', function () {
     expect($output)->toContain('No domains specified');
 });
 
-it('fails when --webroot is missing', function () {
+it('fails when neither --webroot nor --dns is provided', function () {
     [$code, $output] = runIssue(['--domain' => ['example.com']]);
 
     expect($code)->toBe(Command::FAILURE);
-    expect($output)->toContain('--webroot is required');
+    expect($output)->toContain('--webroot');
 });
 
 it('fails when --provider is not provided', function () {
