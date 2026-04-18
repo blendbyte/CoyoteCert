@@ -163,10 +163,10 @@ it('private_key.pem is mode 0600 and public PEM files are mode 0644', function (
     $this->storage->saveCertificate('example.com', makeFileCert());
 
     $base = $this->dir . '/example.com.EC_P256.';
-    expect(decoct(fileperms($base . 'private_key.pem') & 0777))->toBe('600');
-    expect(decoct(fileperms($base . 'certificate.pem') & 0777))->toBe('644');
-    expect(decoct(fileperms($base . 'fullchain.pem') & 0777))->toBe('644');
-    expect(decoct(fileperms($base . 'ca.pem') & 0777))->toBe('644');
+    expect(decoct(fileperms($base . 'private_key.pem') & 0o777))->toBe('600');
+    expect(decoct(fileperms($base . 'certificate.pem') & 0o777))->toBe('644');
+    expect(decoct(fileperms($base . 'fullchain.pem') & 0o777))->toBe('644');
+    expect(decoct(fileperms($base . 'ca.pem') & 0o777))->toBe('644');
 })->skip(fn() => function_exists('posix_getuid') && posix_getuid() === 0, 'root bypasses chmod checks');
 
 it('saveCertificate overwrites PEM files on renewal', function () {
