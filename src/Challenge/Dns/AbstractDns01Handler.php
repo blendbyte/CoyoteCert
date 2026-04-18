@@ -136,12 +136,8 @@ abstract class AbstractDns01Handler implements ChallengeHandlerInterface
         $deadline = time() + $this->propagationTimeout;
 
         do {
-            try {
-                LocalChallengeTest::dns($domain, '_acme-challenge', $keyAuthorization);
-
+            if ($this->isTxtRecordVisible($domain, $keyAuthorization)) {
                 return;
-            } catch (DomainValidationException) {
-                // Record not yet visible — keep polling.
             }
 
             if (time() < $deadline) {
@@ -150,5 +146,22 @@ abstract class AbstractDns01Handler implements ChallengeHandlerInterface
         } while (time() < $deadline);
 
         // Timeout: fail open and let the ACME server decide.
+    }
+
+    /**
+     * Perform a single DNS TXT record visibility check.
+     *
+     * Marked protected so tests can subclass and return a controlled result
+     * without making real DNS queries.
+     */
+    protected function isTxtRecordVisible(string $domain, string $keyAuthorization): bool
+    {
+        try {
+            LocalChallengeTest::dns($domain, '_acme-challenge', $keyAuthorization);
+
+            return true;
+        } catch (DomainValidationException) {
+            return false;
+        }
     }
 }

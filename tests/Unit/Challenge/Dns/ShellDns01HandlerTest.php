@@ -63,6 +63,20 @@ it('cleanup passes the cleanup command template to run()', function () {
     expect($handler->calls[0]['keyAuth'])->toBe('');
 });
 
+afterEach(function () {
+    unset($GLOBALS['__test_proc_open']);
+});
+
+// ── proc_open failure ─────────────────────────────────────────────────────────
+
+it('run() throws ChallengeException when proc_open fails to start the process', function () {
+    $GLOBALS['__test_proc_open'] = false;
+    $handler                     = new ShellHandlerWithRealRun('/some-command {domain}');
+
+    expect(fn() => $handler->deploy('example.com', '', 'keyauth'))
+        ->toThrow(ChallengeException::class, 'failed to start');
+});
+
 // ── run() via real shell ──────────────────────────────────────────────────────
 
 it('run() does not throw when the command exits with code 0', function () {

@@ -139,6 +139,24 @@ it('real pollForTxtRecord fails open when the DNS lookup cannot be satisfied', f
     )->not->toThrow(\Throwable::class);
 });
 
+it('pollForTxtRecord returns immediately when isTxtRecordVisible returns true', function () {
+    $handler = new class extends AbstractDns01Handler {
+        public function deploy(string $domain, string $token, string $keyAuth): void
+        {
+            $this->awaitPropagation($domain, $keyAuth);
+        }
+
+        public function cleanup(string $domain, string $token): void {}
+
+        protected function isTxtRecordVisible(string $domain, string $keyAuthorization): bool
+        {
+            return true;
+        }
+    };
+
+    expect(fn() => $handler->deploy('example.com', '', 'keyauth'))->not->toThrow(\Throwable::class);
+});
+
 it('pollForTxtRecord sleeps between poll attempts when the deadline has not passed', function () {
     // Freeze fake time so the deadline check is deterministic regardless of real DNS speed.
     // sleep() in this namespace advances __test_time, so after sleep(5) the fake clock

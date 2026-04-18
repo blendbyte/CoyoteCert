@@ -117,6 +117,23 @@ namespace CoyoteCert\Challenge\Dns {
             \curl_close($handle);
         }
     }
+
+    function proc_open(
+        string|array $command,
+        array $descriptorspec,
+        mixed &$pipes,
+        ?string $cwd = null,
+        ?array $env = null,
+        ?array $options = null,
+    ): mixed {
+        if (isset($GLOBALS['__test_proc_open']) && $GLOBALS['__test_proc_open'] === false) {
+            $pipes = [];
+
+            return false;
+        }
+
+        return \proc_open($command, $descriptorspec, $pipes, $cwd, $env, $options ?? []);
+    }
 }
 
 // ── Override curl_* in the Challenge\Dns\Internal namespace (unit tests only) ──
