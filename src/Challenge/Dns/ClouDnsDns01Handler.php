@@ -73,7 +73,7 @@ class ClouDnsDns01Handler extends AbstractDns01Handler
 
         // add-record.json does not return the new record's ID.
         // Retrieve it via the records list, matching by TXT value.
-        $records  = $this->httpClient->request('GET', '/dns/records.json', queryParams: [
+        $records = $this->httpClient->request('GET', '/dns/records.json', queryParams: [
             ...$this->auth(),
             'domain-name' => $zone,
             'host'        => $host,
