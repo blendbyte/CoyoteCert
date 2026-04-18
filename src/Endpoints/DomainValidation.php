@@ -199,14 +199,17 @@ class DomainValidation extends Endpoint
             );
 
             if (!$status->isValid() && $status->identifier['type'] === 'dns') {
-                [$ns, $ip, $found] = LocalChallengeTest::lookupTxt($status->identifier['value']);
-                $this->client->logger('debug', sprintf(
-                    'DNS check via %s (%s) → _acme-challenge.%s TXT = %s',
-                    $ns,
-                    $ip,
-                    $status->identifier['value'],
-                    empty($found) ? '(none)' : implode(', ', array_map(fn($v) => '"' . $v . '"', $found)),
-                ));
+                foreach (LocalChallengeTest::lookupTxt($status->identifier['value']) as $result) {
+                    $this->client->logger('debug', sprintf(
+                        'DNS check via %s (%s) → _acme-challenge.%s TXT = %s',
+                        $result['ns'],
+                        $result['ip'],
+                        $status->identifier['value'],
+                        empty($result['found'])
+                            ? '(none)'
+                            : implode(', ', array_map(fn($v) => '"' . $v . '"', $result['found'])),
+                    ));
+                }
             }
 
             if (!$status->isValid()) {

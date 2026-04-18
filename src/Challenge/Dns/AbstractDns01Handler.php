@@ -205,28 +205,37 @@ abstract class AbstractDns01Handler implements ChallengeHandlerInterface
     protected function isTxtRecordVisible(string $domain, string $keyAuthorization): bool
     {
         if ($this->logger !== null) {
-            try {
-                $ns = LocalChallengeTest::getNameserver($domain);
-                $ip = gethostbyname($ns);
+            $allVisible = true;
+
+            foreach (LocalChallengeTest::lookupTxt($domain) as $result) {
+                $hasValue = in_array($keyAuthorization, $result['found'], true);
                 $this->logger->debug(sprintf(
-                    'DNS propagation check: querying %s (%s) for _acme-challenge.%s TXT',
-                    $ns,
-                    $ip !== $ns ? $ip : 'unresolved',
+                    'DNS propagation check: %s (%s) → _acme-challenge.%s TXT = %s',
+                    $result['ns'],
+                    $result['ip'],
                     $domain,
+                    empty($result['found'])
+                        ? '(none)'
+                        : implode(', ', array_map(fn($v) => '"' . $v . '"', $result['found'])),
                 ));
-            } catch (\Throwable) {
-                $this->logger->debug(sprintf('DNS propagation check for %s (NS lookup failed)', $domain));
+
+                if (!$hasValue) {
+                    $allVisible = false;
+                }
             }
+
+            if ($allVisible) {
+                $this->logger->debug(sprintf('TXT record confirmed on all nameservers: _acme-challenge.%s', $domain));
+            }
+
+            return $allVisible;
         }
 
         try {
             LocalChallengeTest::dns($domain, '_acme-challenge', $keyAuthorization);
-            $this->logger?->debug(sprintf('TXT record confirmed: _acme-challenge.%s is visible', $domain));
 
             return true;
-        } catch (DomainValidationException $e) {
-            $this->logger?->debug($e->getMessage());
-
+        } catch (DomainValidationException) {
             return false;
         }
     }

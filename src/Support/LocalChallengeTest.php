@@ -32,38 +32,38 @@ class LocalChallengeTest
     public static function dns(string $domain, string $name, string $value): void
     {
         $challenge   = sprintf('%s.%s', $name, $domain);
-        $nameserver  = self::DEFAULT_NAMESERVER;
-        $foundTxt    = [];
-        $lookupError = null;
+        $nameservers = self::getNameservers($domain);
 
-        try {
-            $nameserver = self::getNameserver($domain);
+        // All authoritative nameservers must have the record — ACME validators check each one.
+        foreach ($nameservers as $nameserver) {
+            $foundTxt    = [];
+            $lookupError = null;
 
-            // Try to validate TXT records directly.
-            $txtRecords = self::getRecords($nameserver, $challenge, DNS_TXT);
-            $foundTxt   = array_map(fn($r) => $r->txt(), $txtRecords);
+            try {
+                $txtRecords = self::getRecords($nameserver, $challenge, DNS_TXT);
+                $foundTxt   = array_map(fn($r) => $r->txt(), $txtRecords);
 
-            if (self::validateTxtRecords($txtRecords, $value)) {
-                return;
+                if (self::validateTxtRecords($txtRecords, $value)) {
+                    continue;
+                }
+
+                $cnameRecords = self::getRecords($nameserver, $challenge, DNS_CNAME);
+                if (self::validateCnameRecords($cnameRecords, $value)) {
+                    continue;
+                }
+            } catch (RuntimeException $e) {
+                $lookupError = $e->getMessage();
             }
 
-            // Try to validate a CNAME record pointing to a TXT record containing the correct value.
-            $cnameRecords = self::getRecords($nameserver, $challenge, DNS_CNAME);
-            if (self::validateCnameRecords($cnameRecords, $value)) {
-                return;
-            }
-        } catch (RuntimeException $e) {
-            $lookupError = $e->getMessage();
+            throw DomainValidationException::localDnsChallengeTestFailed(
+                $domain,
+                $challenge,
+                $nameserver,
+                $value,
+                $foundTxt,
+                $lookupError,
+            );
         }
-
-        throw DomainValidationException::localDnsChallengeTestFailed(
-            $domain,
-            $challenge,
-            $nameserver,
-            $value,
-            $foundTxt,
-            $lookupError,
-        );
     }
 
     /** @param array<mixed> $records */
@@ -106,43 +106,56 @@ class LocalChallengeTest
 
     public static function getNameserver(string $domain): string
     {
+        return self::getNameservers($domain)[0] ?? self::DEFAULT_NAMESERVER;
+    }
+
+    /**
+     * All authoritative nameservers for $domain, found by walking up the zone
+     * hierarchy until NS records appear (e.g. certtest.oa1.net → oa1.net).
+     *
+     * @return string[]
+     */
+    public static function getNameservers(string $domain): array
+    {
         $dnsResolver = new Dns();
         $parts       = explode('.', $domain);
 
-        // Walk up the zone hierarchy until we find NS records.
-        // e.g. certtest.oa1.net has no NS → try oa1.net → found.
         for ($i = 0; $i < count($parts) - 1; $i++) {
             $candidate = implode('.', array_slice($parts, $i));
             try {
                 $result = $dnsResolver->getRecords($candidate, DNS_NS);
                 if (!empty($result)) {
-                    return $result[0]->target();
+                    return array_map(fn($r) => $r->target(), $result);
                 }
             } catch (\Throwable) {
                 // No NS at this level; try parent zone.
             }
         }
 
-        return self::DEFAULT_NAMESERVER;
+        return [self::DEFAULT_NAMESERVER];
     }
 
     /**
-     * Look up _acme-challenge TXT records from the authoritative NS.
+     * TXT records at _acme-challenge.{domain} queried from every authoritative NS.
      *
-     * @return array{0: string, 1: string, 2: string[]} [nameserver, ip, found_values]
+     * @return array<array{ns: string, ip: string, found: string[]}>
      */
     public static function lookupTxt(string $domain): array
     {
-        try {
-            $ns      = self::getNameserver($domain);
-            $ip      = gethostbyname($ns);
-            $records = self::getRecords($ns, '_acme-challenge.' . $domain, DNS_TXT);
-            $found   = array_map(fn($r) => $r->txt(), $records);
+        $results = [];
 
-            return [$ns, $ip !== $ns ? $ip : 'unresolved', $found];
-        } catch (\Throwable) {
-            return [self::DEFAULT_NAMESERVER, 'unresolved', []];
+        foreach (self::getNameservers($domain) as $ns) {
+            try {
+                $ip        = gethostbyname($ns);
+                $records   = self::getRecords($ns, '_acme-challenge.' . $domain, DNS_TXT);
+                $found     = array_map(fn($r) => $r->txt(), $records);
+                $results[] = ['ns' => $ns, 'ip' => $ip !== $ns ? $ip : 'unresolved', 'found' => $found];
+            } catch (\Throwable) {
+                $results[] = ['ns' => $ns, 'ip' => 'unresolved', 'found' => []];
+            }
         }
+
+        return $results;
     }
 
     /** @return array<mixed> */
