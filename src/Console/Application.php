@@ -2,6 +2,7 @@
 
 namespace CoyoteCert\Console;
 
+use Composer\InstalledVersions;
 use CoyoteCert\Console\Command\IssueCommand;
 use CoyoteCert\Console\Command\StatusCommand;
 use Symfony\Component\Console\Application as BaseApplication;
@@ -15,7 +16,8 @@ class Application extends BaseApplication
 
     public function __construct()
     {
-        parent::__construct('coyote', '1.0.0');
+        $version = InstalledVersions::getPrettyVersion('blendbyte/coyotecert') ?? 'dev';
+        parent::__construct('coyote', $version);
 
         $this->addCommands([
             new IssueCommand(),
