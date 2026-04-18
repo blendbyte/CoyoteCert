@@ -6,6 +6,7 @@ use CoyoteCert\Enums\AuthorizationChallengeEnum;
 use CoyoteCert\Exceptions\DomainValidationException;
 use CoyoteCert\Interfaces\ChallengeHandlerInterface;
 use CoyoteCert\Support\LocalChallengeTest;
+use Psr\Log\LoggerInterface;
 
 /**
  * Base class for dns-01 challenge handlers.
@@ -48,10 +49,11 @@ use CoyoteCert\Support\LocalChallengeTest;
  */
 abstract class AbstractDns01Handler implements ChallengeHandlerInterface
 {
-    private bool $propagationCheck        = true;
-    private int  $propagationTimeout      = 60;
-    private int  $propagationPollInterval = 5;
-    private int  $propagationDelaySecs    = 0;
+    private bool             $propagationCheck        = true;
+    private int              $propagationTimeout      = 60;
+    private int              $propagationPollInterval = 5;
+    private int              $propagationDelaySecs    = 0;
+    private ?LoggerInterface $logger                  = null;
 
     final public function supports(AuthorizationChallengeEnum $type): bool
     {
@@ -92,6 +94,14 @@ abstract class AbstractDns01Handler implements ChallengeHandlerInterface
     {
         $clone                       = clone $this;
         $clone->propagationDelaySecs = max(0, $seconds);
+
+        return $clone;
+    }
+
+    public function withLogger(LoggerInterface $logger): static
+    {
+        $clone         = clone $this;
+        $clone->logger = $logger;
 
         return $clone;
     }
@@ -194,11 +204,28 @@ abstract class AbstractDns01Handler implements ChallengeHandlerInterface
      */
     protected function isTxtRecordVisible(string $domain, string $keyAuthorization): bool
     {
+        if ($this->logger !== null) {
+            try {
+                $ns = LocalChallengeTest::getNameserver($domain);
+                $ip = gethostbyname($ns);
+                $this->logger->debug(sprintf(
+                    'DNS propagation check: querying %s (%s) for _acme-challenge.%s TXT',
+                    $ns,
+                    $ip !== $ns ? $ip : 'unresolved',
+                    $domain,
+                ));
+            } catch (\Throwable) {
+                $this->logger->debug(sprintf('DNS propagation check for %s (NS lookup failed)', $domain));
+            }
+        }
+
         try {
             LocalChallengeTest::dns($domain, '_acme-challenge', $keyAuthorization);
 
             return true;
-        } catch (DomainValidationException) {
+        } catch (DomainValidationException $e) {
+            $this->logger?->debug($e->getMessage());
+
             return false;
         }
     }

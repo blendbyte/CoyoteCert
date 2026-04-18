@@ -104,7 +104,7 @@ class LocalChallengeTest
         return false;
     }
 
-    private static function getNameserver(string $domain): string
+    public static function getNameserver(string $domain): string
     {
         $dnsResolver = new Dns();
 

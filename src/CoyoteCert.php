@@ -2,6 +2,7 @@
 
 namespace CoyoteCert;
 
+use CoyoteCert\Challenge\Dns\AbstractDns01Handler;
 use CoyoteCert\DTO\AccountData;
 use CoyoteCert\DTO\Dns01ValidationData;
 use CoyoteCert\DTO\Http01ValidationData;
@@ -356,6 +357,10 @@ class CoyoteCert
         AccountData $account,
         ChallengeHandlerInterface $challengeHandler,
     ): void {
+        if ($this->logger !== null && $challengeHandler instanceof AbstractDns01Handler) {
+            $challengeHandler = $challengeHandler->withLogger($this->logger);
+        }
+
         $challenges     = $api->domainValidation()->status($order);
         $challengeType  = $this->detectChallengeType();
         $validationData = $api->domainValidation()->getValidationData($challenges, $challengeType);

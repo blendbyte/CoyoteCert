@@ -170,14 +170,14 @@ class DomainValidation extends Endpoint
 
     public function allChallengesPassed(OrderData $orderData): bool
     {
-        for ($attempt = 0; $attempt < 4; $attempt++) {
+        for ($attempt = 0; $attempt < 10; $attempt++) {
             [$statuses, $retryAfter] = $this->statusWithRetryHint($orderData);
 
             if ($this->challengeSucceeded($statuses)) {
                 return true;
             }
 
-            if ($attempt === 3) {
+            if ($attempt === 9) {
                 break;
             }
 
