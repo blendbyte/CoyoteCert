@@ -106,6 +106,44 @@ abstract class AbstractDns01Handler implements ChallengeHandlerInterface
     }
 
     /**
+     * Walk the public-suffix candidates for zone auto-detection.
+     *
+     * sub.example.com → ['sub.example.com', 'example.com']
+     * example.com     → ['example.com']
+     *
+     * @return list<string>
+     */
+    protected function zoneCandidates(string $domain): array
+    {
+        $parts      = explode('.', $domain);
+        $candidates = [];
+
+        for ($i = 0; $i < count($parts) - 1; $i++) {
+            $candidates[] = implode('.', array_slice($parts, $i));
+        }
+
+        return $candidates;
+    }
+
+    /**
+     * The relative TXT record name within a zone.
+     *
+     * For providers that require a label relative to the zone (Hetzner,
+     * DigitalOcean, ClouDNS) rather than the FQDN (Cloudflare, Route53).
+     *
+     * example.com     in zone example.com → '_acme-challenge'
+     * sub.example.com in zone example.com → '_acme-challenge.sub'
+     */
+    protected function relativeRecordName(string $domain, string $zoneName): string
+    {
+        if ($domain === $zoneName) {
+            return '_acme-challenge';
+        }
+
+        return '_acme-challenge.' . substr($domain, 0, -(strlen($zoneName) + 1));
+    }
+
+    /**
      * Wait for the _acme-challenge TXT record to appear on the domain's
      * authoritative nameservers, then apply any configured fixed delay.
      *

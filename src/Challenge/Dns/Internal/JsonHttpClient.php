@@ -3,6 +3,7 @@
 namespace CoyoteCert\Challenge\Dns\Internal;
 
 use CoyoteCert\Exceptions\ChallengeException;
+use CoyoteCert\Exceptions\HttpChallengeException;
 
 /**
  * Shared JSON HTTP client for DNS provider API calls.
@@ -20,11 +21,13 @@ class JsonHttpClient
      * @param string $baseUrl Base URL prepended to every path (no trailing slash).
      * @param array<int, string> $defaultHeaders Headers sent with every request (e.g. auth).
      * @param int $timeout Per-request cURL timeout in seconds.
+     * @param string|null $providerName Prefixed to error messages for easier debugging (e.g. "Cloudflare").
      */
     public function __construct(
         private readonly string $baseUrl,
         private readonly array $defaultHeaders = [],
         private readonly int $timeout = 15,
+        private readonly ?string $providerName = null,
     ) {}
 
     /**
@@ -72,7 +75,7 @@ class JsonHttpClient
         $ch = curl_init($url);
 
         if ($ch === false) {
-            throw new ChallengeException('Failed to initialise cURL.');
+            throw new ChallengeException($this->prefixed('Failed to initialise cURL.'));
         }
 
         curl_setopt_array($ch, [
@@ -98,17 +101,18 @@ class JsonHttpClient
         curl_close($ch);
 
         if ($raw === false || $error !== '') {
-            throw new ChallengeException("HTTP request failed: {$error}");
+            throw new ChallengeException($this->prefixed("HTTP request failed: {$error}"));
         }
 
         if ($status >= 400) {
-            throw new ChallengeException(
-                sprintf(
+            throw new HttpChallengeException(
+                $this->prefixed(sprintf(
                     'API returned HTTP %d for %s %s.',
                     $status,
                     $method,
                     parse_url($url, PHP_URL_PATH) ?: $url,
-                ),
+                )),
+                $status,
             );
         }
 
@@ -119,5 +123,10 @@ class JsonHttpClient
         }
 
         return json_decode($decoded, true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    private function prefixed(string $message): string
+    {
+        return $this->providerName !== null ? "{$this->providerName}: {$message}" : $message;
     }
 }

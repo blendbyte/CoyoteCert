@@ -4,6 +4,7 @@ namespace CoyoteCert\Challenge\Dns;
 
 use CoyoteCert\Challenge\Dns\Internal\JsonHttpClient;
 use CoyoteCert\Exceptions\ChallengeException;
+use CoyoteCert\Exceptions\HttpChallengeException;
 
 /**
  * DNS-01 challenge handler for the DigitalOcean DNS API.
@@ -38,6 +39,7 @@ class DigitalOceanDns01Handler extends AbstractDns01Handler
         $this->httpClient = $httpClient ?? new JsonHttpClient(
             baseUrl: 'https://api.digitalocean.com/v2',
             defaultHeaders: ['Authorization: Bearer ' . $apiToken],
+            providerName: 'DigitalOcean',
         );
     }
 
@@ -88,8 +90,10 @@ class DigitalOceanDns01Handler extends AbstractDns01Handler
                 $this->zoneCache[$candidate] = true;
 
                 return $candidate;
-            } catch (ChallengeException) {
-                // Domain not registered in this account at this suffix level — try next.
+            } catch (HttpChallengeException $e) {
+                if ($e->httpStatus !== 404) {
+                    throw $e; // 401, 403, 500, etc. — propagate; only 404 means "not found here"
+                }
             }
         }
 
@@ -98,25 +102,4 @@ class DigitalOceanDns01Handler extends AbstractDns01Handler
         );
     }
 
-    private function relativeRecordName(string $domain, string $zoneName): string
-    {
-        if ($domain === $zoneName) {
-            return '_acme-challenge';
-        }
-
-        return '_acme-challenge.' . substr($domain, 0, -(strlen($zoneName) + 1));
-    }
-
-    /** @return list<string> */
-    private function zoneCandidates(string $domain): array
-    {
-        $parts      = explode('.', $domain);
-        $candidates = [];
-
-        for ($i = 0; $i < count($parts) - 1; $i++) {
-            $candidates[] = implode('.', array_slice($parts, $i));
-        }
-
-        return $candidates;
-    }
 }

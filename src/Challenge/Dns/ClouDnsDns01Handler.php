@@ -43,6 +43,7 @@ class ClouDnsDns01Handler extends AbstractDns01Handler
     ) {
         $this->httpClient = $httpClient ?? new JsonHttpClient(
             baseUrl: 'https://api.cloudns.net',
+            providerName: 'ClouDNS',
         );
     }
 
@@ -116,31 +117,10 @@ class ClouDnsDns01Handler extends AbstractDns01Handler
         );
     }
 
-    private function relativeRecordName(string $domain, string $zoneName): string
-    {
-        if ($domain === $zoneName) {
-            return '_acme-challenge';
-        }
-
-        return '_acme-challenge.' . substr($domain, 0, -(strlen($zoneName) + 1));
-    }
-
     /** @return array{auth-id: string, auth-password: string} */
     private function auth(): array
     {
         return ['auth-id' => $this->authId, 'auth-password' => $this->authPassword];
     }
 
-    /** @return list<string> */
-    private function zoneCandidates(string $domain): array
-    {
-        $parts      = explode('.', $domain);
-        $candidates = [];
-
-        for ($i = 0; $i < count($parts) - 1; $i++) {
-            $candidates[] = implode('.', array_slice($parts, $i));
-        }
-
-        return $candidates;
-    }
 }

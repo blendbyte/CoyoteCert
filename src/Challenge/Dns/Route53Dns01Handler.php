@@ -206,16 +206,4 @@ class Route53Dns01Handler extends AbstractDns01Handler
         return (string) $raw;
     }
 
-    /** @return list<string> */
-    private function zoneCandidates(string $domain): array
-    {
-        $parts      = explode('.', $domain);
-        $candidates = [];
-
-        for ($i = 0; $i < count($parts) - 1; $i++) {
-            $candidates[] = implode('.', array_slice($parts, $i));
-        }
-
-        return $candidates;
-    }
 }

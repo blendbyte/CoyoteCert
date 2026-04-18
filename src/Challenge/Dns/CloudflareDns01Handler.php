@@ -37,6 +37,7 @@ class CloudflareDns01Handler extends AbstractDns01Handler
         $this->httpClient = $httpClient ?? new JsonHttpClient(
             baseUrl: 'https://api.cloudflare.com/client/v4',
             defaultHeaders: ['Authorization: Bearer ' . $apiToken],
+            providerName: 'Cloudflare',
         );
     }
 
@@ -97,16 +98,4 @@ class CloudflareDns01Handler extends AbstractDns01Handler
         );
     }
 
-    /** @return list<string> */
-    private function zoneCandidates(string $domain): array
-    {
-        $parts      = explode('.', $domain);
-        $candidates = [];
-
-        for ($i = 0; $i < count($parts) - 1; $i++) {
-            $candidates[] = implode('.', array_slice($parts, $i));
-        }
-
-        return $candidates;
-    }
 }

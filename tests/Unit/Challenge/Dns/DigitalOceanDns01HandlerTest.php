@@ -3,6 +3,7 @@
 use CoyoteCert\Challenge\Dns\DigitalOceanDns01Handler;
 use CoyoteCert\Challenge\Dns\Internal\JsonHttpClient;
 use CoyoteCert\Exceptions\ChallengeException;
+use CoyoteCert\Exceptions\HttpChallengeException;
 
 class MockDigitalOceanHandler extends DigitalOceanDns01Handler
 {
@@ -64,9 +65,9 @@ function doZoneResponse(string $name): array
     return ['domain' => ['name' => $name, 'ttl' => 30]];
 }
 
-function doZoneNotFound(string $candidate): ChallengeException
+function doZoneNotFound(string $candidate): HttpChallengeException
 {
-    return new ChallengeException("API returned HTTP 404 for GET /domains/{$candidate}.");
+    return new HttpChallengeException("API returned HTTP 404 for GET /domains/{$candidate}.", 404);
 }
 
 function doRecordResponse(int $id): array
@@ -183,6 +184,15 @@ it('deploy caches the detected zone and does not probe again on second deploy', 
 });
 
 // ── deploy() error handling ───────────────────────────────────────────────────
+
+it('deploy propagates non-404 HTTP errors during zone detection', function () {
+    [$client, $handler] = doHandler('tok', null, [
+        new HttpChallengeException('DigitalOcean: API returned HTTP 401 for GET /domains/example.com.', 401),
+    ]);
+
+    expect(fn() => $handler->deploy('example.com', '', 'key'))
+        ->toThrow(HttpChallengeException::class, 'HTTP 401');
+});
 
 it('deploy throws when no domain is found for any candidate', function () {
     [$client, $handler] = doHandler('tok', null, [

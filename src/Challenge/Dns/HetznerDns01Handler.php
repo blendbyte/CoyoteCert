@@ -43,6 +43,7 @@ class HetznerDns01Handler extends AbstractDns01Handler
         $this->httpClient = $httpClient ?? new JsonHttpClient(
             baseUrl: 'https://dns.hetzner.com/api/v1',
             defaultHeaders: ['Auth-API-Token: ' . $apiToken],
+            providerName: 'Hetzner',
         );
     }
 
@@ -121,25 +122,4 @@ class HetznerDns01Handler extends AbstractDns01Handler
         );
     }
 
-    private function relativeRecordName(string $domain, string $zoneName): string
-    {
-        if ($domain === $zoneName) {
-            return '_acme-challenge';
-        }
-
-        return '_acme-challenge.' . substr($domain, 0, -(strlen($zoneName) + 1));
-    }
-
-    /** @return list<string> */
-    private function zoneCandidates(string $domain): array
-    {
-        $parts      = explode('.', $domain);
-        $candidates = [];
-
-        for ($i = 0; $i < count($parts) - 1; $i++) {
-            $candidates[] = implode('.', array_slice($parts, $i));
-        }
-
-        return $candidates;
-    }
 }
