@@ -46,7 +46,7 @@ class RenewalInfo extends Endpoint
 
         $serialBin = hex2bin($parsed['serialNumberHex'] ?? '');
 
-        if ($serialBin === false) {
+        if ($serialBin === false || $serialBin === '') {
             throw new CryptoException('Failed to decode certificate serial number.');
         }
 
