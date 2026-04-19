@@ -33,8 +33,9 @@ abstract class Endpoint
      * Each call to $this->createKeyId() fetches a fresh nonce, so the retry
      * automatically gets a new one from the server.
      * The Replay-Nonce from each response is cached for the next request.
+     *
+     * @param array<string, mixed>|null $payload
      */
-    /** @param array<string, mixed>|null $payload */
     protected function postSigned(string $url, string $accountUrl, ?array $payload = null): Response
     {
         $send = fn() => $this->client->getHttpClient()->post(
