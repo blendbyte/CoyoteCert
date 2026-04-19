@@ -46,7 +46,7 @@ class JsonWebSignature
             'url'   => $url,
         ];
 
-        $payload64   = Base64::urlSafeEncode(str_replace('\\/', '/', json_encode($payload, JSON_THROW_ON_ERROR)));
+        $payload64   = Base64::urlSafeEncode(json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
         $protected64 = Base64::urlSafeEncode(json_encode($protected, JSON_THROW_ON_ERROR));
 
         if (!openssl_sign($protected64 . '.' . $payload64, $signed, $privateKey, $digest)) {

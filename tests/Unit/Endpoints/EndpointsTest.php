@@ -860,7 +860,7 @@ it('DomainValidation::start() throws DomainValidationException when challenge da
         ->toThrow(\CoyoteCert\Exceptions\DomainValidationException::class, 'No dns-01 challenge found');
 });
 
-it('DomainValidation::start() logs error when challenge POST returns >= 400', function () {
+it('DomainValidation::start() throws when challenge POST returns >= 400', function () {
     $api = makeEndpointApi(endpointMock(
         getBody: directoryBody(),
         postBody: ['detail' => 'Bad challenge'],
@@ -876,9 +876,8 @@ it('DomainValidation::start() logs error when challenge POST returns >= 400', fu
         validationRecord: [],
     );
 
-    // start() logs the error but still returns the response without throwing.
-    $response = $api->domainValidation()->start(makeAccountData(), $dvd, AuthorizationChallengeEnum::HTTP, false);
-    expect($response->getHttpResponseCode())->toBe(400);
+    expect(fn() => $api->domainValidation()->start(makeAccountData(), $dvd, AuthorizationChallengeEnum::HTTP, false))
+        ->toThrow(AcmeException::class, 'Bad challenge');
 });
 
 it('DomainValidation::allChallengesPassed() returns true immediately when no authz URLs', function () {
