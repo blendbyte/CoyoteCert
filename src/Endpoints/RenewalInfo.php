@@ -35,7 +35,13 @@ class RenewalInfo extends Endpoint
 
     public function certId(string $certPem, string $issuerPem): string
     {
-        $issuerSpki = $this->spkiDer(openssl_get_publickey($issuerPem));
+        $issuerKey = openssl_get_publickey($issuerPem);
+
+        if ($issuerKey === false) {
+            throw new CryptoException('Failed to parse issuer certificate public key.');
+        }
+
+        $issuerSpki = $this->spkiDer($issuerKey);
         $issuerHash = Base64::urlSafeEncode(hash('sha256', $issuerSpki, true));
 
         $parsed = openssl_x509_parse($certPem);
@@ -55,7 +61,7 @@ class RenewalInfo extends Endpoint
         return $issuerHash . '.' . $serial;
     }
 
-    private function spkiDer(mixed $publicKey): string
+    private function spkiDer(\OpenSSLAsymmetricKey $publicKey): string
     {
         // "BEGIN PUBLIC KEY" PEM wraps raw SPKI DER — strip the headers to get the DER bytes
         $details = openssl_pkey_get_details($publicKey);
