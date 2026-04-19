@@ -195,12 +195,23 @@ class FilesystemStorage implements StorageInterface
             );
         }
 
-        file_put_contents($path, $contents, LOCK_EX);
-
         if (str_ends_with($path, '.pem')) {
             $isPublic = str_ends_with($path, 'certificate.pem')
                      || str_ends_with($path, 'fullchain.pem')
                      || str_ends_with($path, 'ca.pem');
+
+            if (!$isPublic) {
+                $oldUmask = umask(0o177);
+            }
+        }
+
+        file_put_contents($path, $contents, LOCK_EX);
+
+        if (isset($oldUmask)) {
+            umask($oldUmask);
+        }
+
+        if (str_ends_with($path, '.pem')) {
             chmod($path, $isPublic ? 0o644 : 0o600);
         }
     }
