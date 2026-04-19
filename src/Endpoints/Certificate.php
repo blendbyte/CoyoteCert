@@ -90,7 +90,7 @@ class Certificate extends Endpoint
         return false;
     }
 
-    public function revoke(string $pem, int $reason = 0): bool
+    public function revoke(string $pem, int $reason = 0): void
     {
         if (!str_contains($pem, '-----BEGIN CERTIFICATE-----')) {
             throw new AcmeException('Could not parse the certificate.');
@@ -118,9 +118,7 @@ class Certificate extends Endpoint
         ]);
 
         if ($response->getHttpResponseCode() !== 200) {
-            $this->logResponse('error', 'Failed to revoke certificate', $response);
+            $this->throwError($response, 'Failed to revoke certificate.');
         }
-
-        return $response->getHttpResponseCode() === 200;
     }
 }

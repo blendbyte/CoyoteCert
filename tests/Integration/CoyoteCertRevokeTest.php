@@ -15,11 +15,11 @@ it('revokes a previously issued certificate', function () {
         ->skipLocalTest()
         ->issue();
 
-    $result = CoyoteCert::with(pebble())
+    CoyoteCert::with(pebble())
         ->storage($storage)
         ->revoke($cert);
 
-    expect($result)->toBeTrue();
+    expect(true)->toBeTrue();
 })->skip(fn() => !pebbleAvailable(), 'Pebble not running — skipping integration tests');
 
 it('revokes with a specific reason code', function () {
@@ -32,11 +32,11 @@ it('revokes with a specific reason code', function () {
         ->skipLocalTest()
         ->issue();
 
-    $result = CoyoteCert::with(pebble())
+    CoyoteCert::with(pebble())
         ->storage($storage)
         ->revoke($cert, RevocationReason::KeyCompromise);
 
-    expect($result)->toBeTrue();
+    expect(true)->toBeTrue();
 })->skip(fn() => !pebbleAvailable(), 'Pebble not running — skipping integration tests');
 
 it('throws when revoke is called without storage', function () {

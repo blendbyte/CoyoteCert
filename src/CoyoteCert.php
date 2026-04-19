@@ -280,7 +280,7 @@ class CoyoteCert
     }
 
     /** Requires storage — the account key is used to sign the revocation request. */
-    public function revoke(StoredCertificate $cert, RevocationReason $reason = RevocationReason::Unspecified): bool
+    public function revoke(StoredCertificate $cert, RevocationReason $reason = RevocationReason::Unspecified): void
     {
         if ($this->storage === null) {
             throw new AcmeException(
@@ -296,7 +296,7 @@ class CoyoteCert
             accountKeyType: $this->accountKeyType,
         );
 
-        return $api->certificate()->revoke($cert->certificate, $reason->value);
+        $api->certificate()->revoke($cert->certificate, $reason->value);
     }
 
     // ── Private issue() helpers ───────────────────────────────────────────────

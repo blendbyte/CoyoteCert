@@ -1062,7 +1062,7 @@ it('Certificate::revoke() throws when PEM header is present but body is not a va
         ->toThrow(AcmeException::class, 'Could not parse the certificate');
 });
 
-it('Certificate::revoke() returns true on successful revocation', function () {
+it('Certificate::revoke() succeeds without throwing on 200', function () {
     $storage = withKeyStorage();
     $key     = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_RSA, 'private_key_bits' => 2048]);
     $csr     = openssl_csr_new(['commonName' => 'test.example.com'], $key);
@@ -1076,10 +1076,12 @@ it('Certificate::revoke() returns true on successful revocation', function () {
             : new Response([], $url, 200, []),
     );
 
-    expect(makeEndpointApi($mock, $storage)->certificate()->revoke($certPem))->toBeTrue();
+    makeEndpointApi($mock, $storage)->certificate()->revoke($certPem);
+
+    expect(true)->toBeTrue();
 });
 
-it('Certificate::revoke() returns false when server rejects revocation', function () {
+it('Certificate::revoke() throws AcmeException when server rejects revocation', function () {
     $storage = withKeyStorage();
     $key     = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_RSA, 'private_key_bits' => 2048]);
     $csr     = openssl_csr_new(['commonName' => 'test.example.com'], $key);
@@ -1093,7 +1095,8 @@ it('Certificate::revoke() returns false when server rejects revocation', functio
             : new Response([], $url, 403, ['detail' => 'Forbidden']),
     );
 
-    expect(makeEndpointApi($mock, $storage)->certificate()->revoke($certPem))->toBeFalse();
+    expect(fn() => makeEndpointApi($mock, $storage)->certificate()->revoke($certPem))
+        ->toThrow(AcmeException::class);
 });
 
 // ── RenewalInfo ───────────────────────────────────────────────────────────────
