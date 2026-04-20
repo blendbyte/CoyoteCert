@@ -4,16 +4,14 @@ namespace CoyoteCert\Support;
 
 use Closure;
 
-if (!function_exists(__NAMESPACE__ . '\\value')) {
-    /**
-     * Return the default value of the given value.
-     *
-     * @param mixed $value
-     *
-     * @return mixed
-     */
-    function value($value)
-    {
-        return $value instanceof Closure ? $value() : $value;
-    }
+/**
+ * Return the default value of the given value.
+ *
+ * @param mixed $value
+ *
+ * @return mixed
+ */
+function value($value)
+{
+    return $value instanceof Closure ? $value() : $value;
 }
