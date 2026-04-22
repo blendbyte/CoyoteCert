@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<!-- Primary SEO -->
+<title>CoyoteCert — Modern ACME v2 client for PHP 8.3+</title>
+<meta name="description" content="CoyoteCert is a small, cheerful PHP 8.3+ ACME v2 client. Issue, renew, and revoke TLS certificates from Let's Encrypt, ZeroSSL, Buypass, and any compliant CA — without shelling out to certbot.">
+<meta name="keywords" content="CoyoteCert, ACME, ACME v2, RFC 8555, PHP, PHP 8.3, Let's Encrypt, ZeroSSL, Buypass, SSL.com, TLS, certificate, HTTPS, Blendbyte">
+<meta name="author" content="Blendbyte">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#c8884a">
+<meta name="color-scheme" content="light">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://coyotecert.com/">
+
+<!-- Favicons -->
+<link rel="icon" href="assets/logo-sm.png?v=2" type="image/png">
+<link rel="apple-touch-icon" href="assets/logo-sm.png?v=2">
+<link rel="mask-icon" href="assets/logo-sm.png?v=2" color="#a83f15">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CoyoteCert">
+<meta property="og:title" content="CoyoteCert — Modern ACME v2 client for PHP 8.3+">
+<meta property="og:description" content="A small, cheerful PHP 8.3+ ACME v2 client. Issue, renew, and revoke TLS certificates from any compliant CA — without shelling out to certbot.">
+<meta property="og:url" content="https://coyotecert.com/">
+<meta property="og:image" content="https://coyotecert.com/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="CoyoteCert mascot holding a sealed certificate. Modern ACME for Modern PHP.">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CoyoteCert — Modern ACME v2 client for PHP 8.3+">
+<meta name="twitter:description" content="Issue, renew, and revoke TLS certificates from Let's Encrypt, ZeroSSL, Buypass, and any compliant CA. PHP 8.3+. MIT.">
+<meta name="twitter:image" content="https://coyotecert.com/assets/og-cover.png">
+<meta name="twitter:image:alt" content="CoyoteCert mascot holding a sealed certificate.">
+
+<!-- Structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "CoyoteCert",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any (PHP 8.3+)",
+      "description": "A PHP 8.3+ ACME v2 client for issuing, renewing, and revoking TLS certificates from any RFC 8555 compliant Certificate Authority.",
+      "url": "https://coyotecert.com/",
+      "downloadUrl": "https://packagist.org/packages/blendbyte/coyotecert",
+      "codeRepository": "https://github.com/blendbyte/coyotecert",
+      "programmingLanguage": "PHP",
+      "license": "https://opensource.org/licenses/MIT",
+      "author": {
+        "@type": "Organization",
+        "name": "Blendbyte",
+        "url": "https://github.com/blendbyte"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "WebSite",
+      "name": "CoyoteCert",
+      "url": "https://coyotecert.com/",
+      "publisher": { "@type": "Organization", "name": "Blendbyte" }
+    }
+  ]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link rel="stylesheet"
+  href="https://fonts.bunny.net/css?family=bowlby-one:400|ibm-plex-sans:400,500,600,700|ibm-plex-mono:400,500,600|special-elite:400&display=swap">
+<link rel="stylesheet" href="styles.css?v=3">
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top bar-dark">
+  <a class="brand" href="#">
+    <img class="brand-mark" src="assets/logo-sm.png?v=2" alt="CoyoteCert logo">
+    <span class="brand-name">CoyoteCert</span>
+  </a>
+  <div class="links">
+    <a href="#features">Features</a>
+    <a href="#usage">Usage</a>
+    <a href="#providers">Providers</a>
+    <a href="#steps">Quick&nbsp;Start</a>
+    <a href="#docs">Docs</a>
+    <a class="ghbtn" href="https://github.com/blendbyte/coyotecert" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.1c-3.2.7-3.87-1.37-3.87-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.04 1.77 2.72 1.26 3.38.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18.92-.26 1.91-.39 2.89-.39s1.97.13 2.89.39c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.77.11 3.06.74.81 1.19 1.83 1.19 3.09 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56 4.57-1.52 7.85-5.83 7.85-10.9C23.5 5.65 18.35.5 12 .5z"/></svg>
+      GitHub
+    </a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="plank wood hero">
+  <div class="screws top"><i class="s1"></i><i class="s2"></i></div>
+  <div class="screws bot"><i class="s1"></i><i class="s2"></i></div>
+  <div class="container">
+    <div class="hero-copy">
+      <div class="kicker">Acme Certificate Co.</div>
+      <h1 class="display">Coyote<span class="amp">Cert</span></h1>
+      <div class="tagline">Modern ACME for Modern PHP</div>
+      <p class="lede">
+        Look, you need TLS certs. You don't need another weekend reading RFC 8555. CoyoteCert is a
+        PHP 8.3+ client that talks ACME to Let's Encrypt, ZeroSSL, Buypass, and anyone else with a
+        compliant directory. It issues. It renews. It revokes. It does not explode at 3am.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/blendbyte/coyotecert" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.1c-3.2.7-3.87-1.37-3.87-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.04 1.77 2.72 1.26 3.38.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18.92-.26 1.91-.39 2.89-.39s1.97.13 2.89.39c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.77.11 3.06.74.81 1.19 1.83 1.19 3.09 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56 4.57-1.52 7.85-5.83 7.85-10.9C23.5 5.65 18.35.5 12 .5z"/></svg>
+          View on GitHub
+        </a>
+        <button class="btn btn-ghost" type="button"
+          onclick="navigator.clipboard && navigator.clipboard.writeText('composer require blendbyte/coyotecert'); this.textContent='✓ copied. go forth.'">
+          $ composer require blendbyte/coyotecert
+        </button>
+      </div>
+
+      <div class="hero-badges">
+        <div class="stamp red"><b>CERTIFIED</b><small>RFC 8555</small></div>
+        <div class="stamp green"><b>APPROVED</b><small>QUALITY SEAL</small></div>
+      </div>
+
+      <div class="by-blendbyte">A <b>Blendbyte</b> open-source project</div>
+    </div>
+
+    <div class="hero-art">
+      <div class="rays"></div>
+      <img src="assets/fox-hero.png?v=2" alt="CoyoteCert mascot holding a sealed certificate">
+    </div>
+  </div>
+</section>
+
+<!-- META BAR -->
+<div class="meta-bar bar-dark">
+  <div class="container">
+    <div><span class="dot"></span>RFC 8555 compliant. <b>ACME v2.</b></div>
+    <div>PHP <b>8.3+</b> · Strict types · PSR-4</div>
+    <div>License: <b>MIT</b> (do what you want)</div>
+    <div>Cooked up by <b>Blendbyte</b></div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="plank wood features" id="features">
+  <div class="screws top"><i class="s1"></i><i class="s2"></i></div>
+  <div class="screws bot"><i class="s1"></i><i class="s2"></i></div>
+  <div class="container">
+    <div class="sec-head">
+      <div class="sec-kicker">What's in the crate</div>
+      <h2 class="sec-title">The Coyote tested it.<br>So you don't have to.</h2>
+      <p class="sec-sub">No global state. No shelling out to certbot and praying. No 600-line configs. Just a PHP library that speaks ACME to any compliant CA and then gets out of your hair.</p>
+    </div>
+
+    <div class="fgrid">
+      <article class="fcard">
+        <div class="stamp-mini">§ 7.4</div>
+        <div class="num">№ 01</div>
+        <div class="ficon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <h3>RFC 8555, by the book</h3>
+        <p>Accounts, orders, authorizations, finalization. Nonces, replay protection, JWS signing. All the boring plumbing happens inside the library. You just ask for a cert.</p>
+      </article>
+      <article class="fcard">
+        <div class="stamp-mini">HTTP + DNS</div>
+        <div class="num">№ 02</div>
+        <div class="ficon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h16"/><circle cx="18" cy="12" r="2"/></svg>
+        </div>
+        <h3>HTTP-01 and DNS-01</h3>
+        <p>HTTP challenge? Built in. DNS challenge for wildcards? Bring a tiny adapter. Route53, Cloudflare, DigitalOcean, your cousin's DNS server. Two methods to implement and you're out.</p>
+      </article>
+      <article class="fcard">
+        <div class="stamp-mini">TYPED</div>
+        <div class="num">№ 03</div>
+        <div class="ficon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/></svg>
+        </div>
+        <h3>Types, not mystery arrays</h3>
+        <p>PHP 8.3 readonly classes. Enums for every state. Return types everywhere. Your IDE knows what it's doing, and so will you. No more printing a response and squinting at it.</p>
+      </article>
+      <article class="fcard">
+        <div class="stamp-mini">KEYS</div>
+        <div class="num">№ 04</div>
+        <div class="ficon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="m10.5 12.5 10.5-10.5M18 5l3 3M15 8l3 3"/></svg>
+        </div>
+        <h3>ECDSA or RSA, your call</h3>
+        <p>P-256, P-384, P-521 or honest 2048 to 4096 bit RSA. Store them on disk, in Vault, in KMS, in a cigar box. One interface, one method, bring whatever you already trust.</p>
+      </article>
+      <article class="fcard">
+        <div class="stamp-mini">AUTO</div>
+        <div class="num">№ 05</div>
+        <div class="ficon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+        </div>
+        <h3>Renewal on autopilot</h3>
+        <p>Stick one command in cron. It's idempotent, writes atomically, and skips certs that aren't due yet. Run it every hour if you feel fancy. The CA won't even notice.</p>
+      </article>
+      <article class="fcard">
+        <div class="stamp-mini">OBSERVE</div>
+        <div class="num">№ 06</div>
+        <div class="ficon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+        </div>
+        <h3>PSR-3 logs, zero mystery</h3>
+        <p>Every request, challenge poll, and retry goes through a logger you hand us. When something goes sideways you get receipts. When nothing goes sideways you also get receipts.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- CODE SECTION -->
+<section class="plank wood-dark codesec" id="usage">
+  <div class="screws top"><i class="s1"></i><i class="s2"></i></div>
+  <div class="screws bot"><i class="s1"></i><i class="s2"></i></div>
+  <div class="container">
+    <div class="code-grid">
+      <div class="code-copy">
+        <div class="sec-kicker">Issue a cert</div>
+        <h2>One chain. One cert.<br>Zero anvils.</h2>
+        <p>
+          Point it at a CA. Hand it a domain and a solver. Get back a fullchain and a private key.
+          That's the whole show. The paperwork is hiding in the basement where it belongs.
+        </p>
+        <ul>
+          <li><span class="check">✓</span><span>Hit Let's Encrypt staging first. Then prod. Same code, different URL.</span></li>
+          <li><span class="check">✓</span><span>Swap CAs by changing one string. ZeroSSL, Buypass, SSL.com, step-ca.</span></li>
+          <li><span class="check">✓</span><span>Get a real <code class="inline">Certificate</code> object. Not a sack of PEM you have to shake out.</span></li>
+          <li><span class="check">✓</span><span>Typed exceptions for rate limits, bad nonces, and other CA tantrums.</span></li>
+        </ul>
+      </div>
+      <div class="code-win">
+        <div class="code-tab">
+          <div class="dots"><i></i><i></i><i></i></div>
+          <span class="fname">IssueCertificate.php</span>
+          <span class="lang">PHP · 8.3</span>
+        </div>
+<pre class="code"><span class="c-k">use</span> Blendbyte\CoyoteCert\<span class="c-t">CoyoteCert</span>;
+<span class="c-k">use</span> Blendbyte\CoyoteCert\Provider\<span class="c-t">LetsEncrypt</span>;
+<span class="c-k">use</span> Blendbyte\CoyoteCert\Storage\<span class="c-t">FilesystemStorage</span>;
+<span class="c-k">use</span> Blendbyte\CoyoteCert\Challenge\<span class="c-t">CloudflareDns01Handler</span>;
+
+<span class="c-v">$cert</span> = <span class="c-t">CoyoteCert</span>::<span class="c-m">with</span>(<span class="c-k">new</span> <span class="c-t">LetsEncrypt</span>())
+    -><span class="c-m">storage</span>(<span class="c-k">new</span> <span class="c-t">FilesystemStorage</span>(<span class="c-s">'/var/certs'</span>))
+    -><span class="c-m">identifiers</span>([<span class="c-s">'example.com'</span>, <span class="c-s">'*.example.com'</span>])
+    -><span class="c-m">email</span>(<span class="c-s">'admin@example.com'</span>)
+    -><span class="c-m">challenge</span>(<span class="c-k">new</span> <span class="c-t">CloudflareDns01Handler</span>(apiToken: <span class="c-s">'your-api-token'</span>))
+    -><span class="c-m">issueOrRenew</span>();</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROVIDERS -->
+<section class="plank wood providers" id="providers">
+  <div class="screws top"><i class="s1"></i><i class="s2"></i></div>
+  <div class="screws bot"><i class="s1"></i><i class="s2"></i></div>
+  <div class="container">
+    <div class="sec-head">
+      <div class="sec-kicker">Plays nice with</div>
+      <h2 class="sec-title">Any CA worth its salt.</h2>
+      <p class="sec-sub">If it speaks ACME v2, CoyoteCert will chat. Swap the directory URL. Keep your code. Life's short.</p>
+    </div>
+
+    <div class="pgrid">
+      <div class="pcard">Let's Encrypt<small>Staging + Prod</small></div>
+      <div class="pcard">ZeroSSL<small>Free 90-day</small></div>
+      <div class="pcard">Buypass<small>Go SSL</small></div>
+      <div class="pcard">SSL.com<small>Enterprise</small></div>
+      <div class="pcard">Google Trust<small>Services</small></div>
+      <div class="pcard">Sectigo<small>ACME</small></div>
+      <div class="pcard">Entrust<small>ACME</small></div>
+      <div class="pcard">Your own<small>Step-CA · Smallstep</small></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n">8555</div><div class="l">RFC compliant</div></div>
+      <div class="stat"><div class="n">8.3+</div><div class="l">PHP required</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">Shell calls</div></div>
+      <div class="stat"><div class="n">MIT</div><div class="l">Open source</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- STEPS -->
+<section class="plank wood steps" id="steps">
+  <div class="screws top"><i class="s1"></i><i class="s2"></i></div>
+  <div class="screws bot"><i class="s1"></i><i class="s2"></i></div>
+  <div class="container">
+    <div class="sec-head">
+      <div class="sec-kicker">Three steps, tops</div>
+      <h2 class="sec-title">Install. Issue. Forget.</h2>
+    </div>
+
+    <div class="step-grid">
+      <div class="step">
+        <span class="chip">STEP 01</span>
+        <h4>Grab the package</h4>
+        <p>Composer, the way nature intended. No weird PECL extensions. Just OpenSSL.</p>
+        <code><span class="c-k">$</span> composer require blendbyte/coyotecert</code>
+      </div>
+      <div class="step">
+        <span class="chip">STEP 02</span>
+        <h4>Catch your first cert</h4>
+        <p>Test on staging. Flip to prod when it stops crashing. (It won't.)</p>
+        <code><span class="c-k">$</span> php artisan cert:issue example.com</code>
+      </div>
+      <div class="step">
+        <span class="chip">STEP 03</span>
+        <h4>Set it, forget it</h4>
+        <p>Safe to run every hour. Only renews what's actually about to expire.</p>
+        <code><span class="c-k">$</span> php artisan cert:renew --due</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="plank wood cta-strip">
+  <div class="screws top"><i class="s1"></i><i class="s2"></i></div>
+  <div class="screws bot"><i class="s1"></i><i class="s2"></i></div>
+  <div class="container">
+    <h2>Stamp it.<br>Ship it. <span style="color:var(--fox-deep)">Sleep on it.</span></h2>
+    <p>MIT licensed. Barely any dependencies. Ready whenever your next deploy is.</p>
+    <div class="cta-row" style="justify-content:center">
+      <a class="btn btn-primary" href="https://github.com/blendbyte/coyotecert" target="_blank" rel="noopener">
+        ★ Star on GitHub
+      </a>
+      <a class="btn btn-ghost" href="#usage">Read the docs →</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bar-dark" id="docs">
+  <div class="container">
+    <div class="fgrid2">
+      <div>
+        <div class="brand" style="margin-bottom:6px">
+          <img class="brand-mark" src="assets/logo-sm.png?v=2" alt="CoyoteCert logo">
+          <span class="brand-name">CoyoteCert</span>
+        </div>
+        <p class="fblurb">
+          A small, cheerful ACME v2 client for PHP&nbsp;8.3+. Issues certs. Renews certs. Revokes certs
+          when they deserve it. MIT licensed, cooked up by Blendbyte with too much coffee.
+        </p>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <a href="https://github.com/blendbyte/coyotecert" target="_blank" rel="noopener">GitHub repo</a>
+        <a href="https://github.com/blendbyte/coyotecert/issues" target="_blank" rel="noopener">Issue tracker</a>
+        <a href="https://github.com/blendbyte/coyotecert/releases" target="_blank" rel="noopener">Releases</a>
+        <a href="https://packagist.org/packages/blendbyte/coyotecert" target="_blank" rel="noopener">Packagist</a>
+      </div>
+      <div>
+        <h5>Learn</h5>
+        <a href="#usage">Quick start</a>
+        <a href="#features">Features</a>
+        <a href="#providers">Supported CAs</a>
+        <a href="https://datatracker.ietf.org/doc/html/rfc8555" target="_blank" rel="noopener">RFC 8555</a>
+      </div>
+      <div>
+        <h5>Community</h5>
+        <a href="https://github.com/blendbyte/coyotecert/discussions" target="_blank" rel="noopener">Discussions</a>
+        <a href="https://github.com/blendbyte" target="_blank" rel="noopener">Blendbyte on GitHub</a>
+        <a href="mailto:hello@coyotecert.com">hello@coyotecert.com</a>
+      </div>
+    </div>
+    <div class="fbottom">
+      <div>© 2026 Blendbyte · MIT License · CoyoteCert is not affiliated with any listed CA.</div>
+      <div>coyotecert.com · built with PHP, caffeine, and a few anvils</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
